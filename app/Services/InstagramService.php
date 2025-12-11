@@ -45,7 +45,7 @@ class InstagramService implements MessagingService
     public function sendItems(string $to, ?string $groupSlug = null): void
     {
         $items = $this->catalogService->listItems($groupSlug);
-        $groupName = $groupSlug ? " in '{$groupSlug}'" : "";
+        $groupName = $groupSlug ? " in '{$groupSlug}'" : '';
         $text = "Available Items{$groupName}:\n\n";
 
         if ($items->isEmpty()) {

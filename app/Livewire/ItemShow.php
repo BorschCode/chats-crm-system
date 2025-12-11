@@ -14,7 +14,7 @@ class ItemShow extends Component
     {
         $item = $catalogService->getItem($slug);
 
-        if (!$item) {
+        if (! $item) {
             abort(404);
         }
 
