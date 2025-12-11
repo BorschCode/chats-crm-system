@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\Group|null $group
+ *
  * @method static \Database\Factories\ItemFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Item newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Item newQuery()
@@ -30,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Item whereSlug($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Item whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Item whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Item extends Model
