@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Item> $items
  * @property-read int|null $items_count
+ *
  * @method static \Database\Factories\GroupFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group newQuery()
@@ -25,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereSlug($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereTitle($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Group whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Group extends Model

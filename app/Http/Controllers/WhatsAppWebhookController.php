@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Services\CatalogService;
 use App\Services\WhatsAppService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -23,40 +22,63 @@ class WhatsAppWebhookController extends Controller
     /**
      * Handle webhook verification (GET request from Meta)
      */
-    public function verify(Request $request): JsonResponse|string
+    public function verify(Request $request)
     {
+        Log::info('WhatsApp webhook verification request received', [
+            'method' => $request->method(),
+            'url' => $request->fullUrl(),
+            'headers' => $request->headers->all(),
+            'query_params' => $request->query(),
+        ]);
+
+        // Facebook sends: hub.mode, hub.challenge, hub.verify_token
+        // PHP converts dots to underscores in query params
         $mode = $request->query('hub_mode');
         $token = $request->query('hub_verify_token');
         $challenge = $request->query('hub_challenge');
 
         $verifyToken = config('services.whatsapp.webhook_verify_token');
 
-        if ($mode === 'subscribe' && $token === $verifyToken) {
-            Log::info('WhatsApp webhook verified successfully');
+        Log::info('WhatsApp webhook verification details', [
+            'received_mode' => $mode,
+            'received_token' => $token,
+            'expected_token' => $verifyToken,
+            'challenge' => $challenge,
+            'tokens_match' => $token === $verifyToken,
+        ]);
 
-            return response($challenge, 200);
+        if ($mode === 'subscribe' && $token === $verifyToken) {
+            Log::info('WEBHOOK VERIFIED');
+
+            // Return ONLY the challenge as plain text, exactly like Node.js version
+            return response($challenge, 200)
+                ->header('Content-Type', 'text/plain');
         }
 
         Log::warning('WhatsApp webhook verification failed', [
             'mode' => $mode,
-            'token' => $token,
+            'received_token' => $token,
+            'expected_token' => $verifyToken,
         ]);
 
-        return response()->json(['status' => 'error', 'message' => 'Verification failed'], 403);
+        return response('', 403);
     }
 
     /**
      * Handle incoming messages (POST request from Meta)
      */
-    public function handle(Request $request): JsonResponse
+    public function handle(Request $request)
     {
         try {
+            $timestamp = now()->format('Y-m-d H:i:s');
+            Log::info("\n\nWebhook received {$timestamp}\n");
+
             $payload = $request->all();
-            Log::info('WhatsApp webhook received', ['payload' => $payload]);
+            Log::info(json_encode($payload, JSON_PRETTY_PRINT));
 
             // WhatsApp Cloud API structure: entry -> changes -> value -> messages
             if (! isset($payload['entry'])) {
-                return response()->json(['status' => 'ok']);
+                return response('', 200);
             }
 
             foreach ($payload['entry'] as $entry) {
@@ -78,14 +100,14 @@ class WhatsAppWebhookController extends Controller
                 }
             }
 
-            return response()->json(['status' => 'ok']);
+            return response('', 200);
         } catch (\Exception $e) {
             Log::error('WhatsApp webhook error: '.$e->getMessage(), [
                 'exception' => $e,
                 'payload' => $request->all(),
             ]);
 
-            return response()->json(['status' => 'error'], 500);
+            return response('', 500);
         }
     }
 
