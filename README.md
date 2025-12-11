@@ -1,22 +1,37 @@
-# Catalog + Multi-Channel Messaging System  
-Based on: https://github.com/BorschCode/chats-crm-system  
-Powered by Laravel 12, Livewire 3, Sail, MySQL
+# Catalog + Multi-Channel Messaging System
+
+[![WhatsApp API](https://img.shields.io/badge/WhatsApp-Cloud_API-brightgreen?logo=whatsapp)]()
+[![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-blue?logo=telegram)]()
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Livewire](https://img.shields.io/badge/Livewire-3.x-purple?logo=livewire&logoColor=white)](https://livewire.laravel.com)
+[![Instagram Messaging](https://img.shields.io/badge/Instagram-Messaging-ff66b2?logo=instagram&logoColor=white)]()
+[![Laravel](https://img.shields.io/badge/Laravel-12.x-red?logo=laravel&logoColor=white)](https://laravel.com)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-8.3-blue?logo=php&logoColor=white)](https://php.net)
+
+Powered by **Laravel 12**, **Livewire 3**, **Sail**, **MySQL**
+
+---
 
 ## 🚀 Overview
 This project is a lightweight, fully Dockerized Laravel 12 application that provides:
 
 - A simple **read-only product catalog**
-- Access through **web interface (Livewire 3)**
-- Access through **Telegram**, **WhatsApp Cloud API**, and **Instagram Messaging API**
-- A clean, modular messaging architecture extended from the `chats-crm-system` boilerplate
-- No admin panel, no CRUD — all data comes from factories + seeders
+- Access through a **modern Livewire 3 web interface**
+- Access through **Telegram Bot**, **WhatsApp Cloud API**, and **Instagram Messaging API**
+- A clean, modular messaging architecture derived from `chats-crm-system`
+- **No admin panel**, **no CRUD** — all content is generated via **Factories + Seeders**
 
-It is ideal for:
-- Small catalogs  
-- Personal stores  
-- Bots that send product listings  
-- WhatsApp/Telegram/Instagram micro-commerce  
-- MVP prototypes  
+### Perfect for:
+- Small catalogs
+- Micro-commerce shops
+- Telegram / WhatsApp / Instagram sales bots
+- MVPs & prototypes
+- Personal digital storefronts
+
+---
+
+![Preview](./docs/index-list.png)
 
 ---
 
