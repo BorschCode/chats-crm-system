@@ -27,12 +27,19 @@ class ItemFactory extends Factory
     {
         $title = $this->faker->unique()->words(3, true);
 
+        // Random image ID between 1-1000 for variety
+        $imageId = $this->faker->numberBetween(1, 1000);
+
+        // Random dimensions for more variety (keeping aspect ratio reasonable)
+        $width = $this->faker->randomElement([400, 500, 600, 640, 800]);
+        $height = $this->faker->randomElement([300, 400, 480, 600]);
+
         return [
             'title' => $title,
             'slug' => Str::slug($title),
             'description' => $this->faker->paragraph(),
             'price' => $this->faker->randomFloat(2, 10, 1000),
-            'image' => $this->faker->imageUrl(640, 480, 'products', true),
+            'image' => "https://picsum.photos/id/{$imageId}/{$width}/{$height}",
             'group_id' => null, // Will be set in the seeder
         ];
     }
