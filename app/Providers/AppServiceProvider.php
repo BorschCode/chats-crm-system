@@ -15,11 +15,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Register Nutgram bot as singleton
+        // Register Nutgram bot as singleton (only if token is configured)
         $this->app->singleton(Nutgram::class, function ($app) {
             $config = config('services.telegram');
+            $token = $config['bot_token'] ?? null;
 
-            return new Nutgram($config['bot_token']);
+            // Provide a dummy token if not configured to prevent crashes
+            if (!$token || $token === 'your_bot_token_from_@BotFather') {
+                $token = 'dummy-token-for-development';
+            }
+
+            return new Nutgram($token);
         });
 
         // Register BotHandlers as singleton
