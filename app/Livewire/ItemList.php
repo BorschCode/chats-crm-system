@@ -15,10 +15,15 @@ class ItemList extends Component
 
     // Filter properties
     public string $search = '';
+
     public ?int $groupFilter = null;
+
     public ?float $minPrice = null;
+
     public ?float $maxPrice = null;
+
     public string $sortBy = 'title';
+
     public string $sortDirection = 'asc';
 
     protected CatalogService $catalogService;

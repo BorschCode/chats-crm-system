@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
             $token = $config['bot_token'] ?? null;
 
             // Provide a dummy token if not configured to prevent crashes
-            if (!$token || $token === 'your_bot_token_from_@BotFather') {
+            if (! $token || $token === 'your_bot_token_from_@BotFather') {
                 $token = 'dummy-token-for-development';
             }
 
