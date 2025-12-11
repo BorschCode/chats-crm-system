@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 class InstagramWebhookController extends Controller
 {
     protected InstagramService $instagramService;
+
     protected CatalogService $catalogService;
 
     public function __construct(InstagramService $instagramService, CatalogService $catalogService)
@@ -63,8 +64,8 @@ class InstagramWebhookController extends Controller
                     break;
             }
         } catch (\Exception $e) {
-            Log::error("Instagram Webhook Error: " . $e->getMessage());
-            $this->instagramService->sendMessage($from, "An error occurred while processing your request.");
+            Log::error('Instagram Webhook Error: '.$e->getMessage());
+            $this->instagramService->sendMessage($from, 'An error occurred while processing your request.');
         }
 
         return response()->json(['status' => 'ok']);

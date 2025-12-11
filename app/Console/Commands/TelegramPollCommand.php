@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
-use SergiX44\Nutgram\Nutgram;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use SergiX44\Nutgram\Nutgram;
 
 class TelegramPollCommand extends Command
 {
@@ -27,6 +27,7 @@ class TelegramPollCommand extends Command
         if (config('services.telegram.mode') !== 'polling') {
             $this->error('Telegram bot is not configured for polling mode.');
             $this->info('Set TELEGRAM_MODE=polling in your .env file.');
+
             return self::FAILURE;
         }
 
@@ -44,10 +45,11 @@ class TelegramPollCommand extends Command
 
             return self::SUCCESS;
         } catch (\Exception $e) {
-            $this->error('Polling error: ' . $e->getMessage());
-            Log::error('Telegram polling error: ' . $e->getMessage(), [
-                'exception' => $e
+            $this->error('Polling error: '.$e->getMessage());
+            Log::error('Telegram polling error: '.$e->getMessage(), [
+                'exception' => $e,
             ]);
+
             return self::FAILURE;
         }
     }

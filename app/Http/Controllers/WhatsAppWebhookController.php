@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Services\CatalogService;
 use App\Services\WhatsAppService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class WhatsAppWebhookController extends Controller
 {
     protected WhatsAppService $whatsAppService;
+
     protected CatalogService $catalogService;
 
     public function __construct(WhatsAppService $whatsAppService, CatalogService $catalogService)
@@ -32,6 +33,7 @@ class WhatsAppWebhookController extends Controller
 
         if ($mode === 'subscribe' && $token === $verifyToken) {
             Log::info('WhatsApp webhook verified successfully');
+
             return response($challenge, 200);
         }
 
@@ -53,17 +55,17 @@ class WhatsAppWebhookController extends Controller
             Log::info('WhatsApp webhook received', ['payload' => $payload]);
 
             // WhatsApp Cloud API structure: entry -> changes -> value -> messages
-            if (!isset($payload['entry'])) {
+            if (! isset($payload['entry'])) {
                 return response()->json(['status' => 'ok']);
             }
 
             foreach ($payload['entry'] as $entry) {
-                if (!isset($entry['changes'])) {
+                if (! isset($entry['changes'])) {
                     continue;
                 }
 
                 foreach ($entry['changes'] as $change) {
-                    if (!isset($change['value']['messages'])) {
+                    if (! isset($change['value']['messages'])) {
                         continue;
                     }
 
@@ -78,7 +80,7 @@ class WhatsAppWebhookController extends Controller
 
             return response()->json(['status' => 'ok']);
         } catch (\Exception $e) {
-            Log::error('WhatsApp webhook error: ' . $e->getMessage(), [
+            Log::error('WhatsApp webhook error: '.$e->getMessage(), [
                 'exception' => $e,
                 'payload' => $request->all(),
             ]);
@@ -96,6 +98,7 @@ class WhatsAppWebhookController extends Controller
         // Only process text messages
         if ($message['type'] !== 'text') {
             Log::info('Ignoring non-text message', ['type' => $message['type']]);
+
             return;
         }
 
@@ -128,8 +131,8 @@ class WhatsAppWebhookController extends Controller
                     break;
 
                 case 'item':
-                    if (!$argument) {
-                        $this->whatsAppService->sendMessage($from, "Please provide an item slug. Example: item product-name");
+                    if (! $argument) {
+                        $this->whatsAppService->sendMessage($from, 'Please provide an item slug. Example: item product-name');
                         break;
                     }
 
@@ -159,7 +162,7 @@ class WhatsAppWebhookController extends Controller
 
             $this->whatsAppService->sendMessage(
                 $from,
-                "An error occurred while processing your request. Please try again later."
+                'An error occurred while processing your request. Please try again later.'
             );
         }
     }

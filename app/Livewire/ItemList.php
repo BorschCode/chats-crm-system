@@ -8,6 +8,7 @@ use Livewire\Component;
 class ItemList extends Component
 {
     public ?string $groupSlug = null;
+
     protected CatalogService $catalogService;
 
     public function boot(CatalogService $catalogService)

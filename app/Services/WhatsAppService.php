@@ -10,10 +10,15 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService implements MessagingService
 {
     protected CatalogService $catalogService;
+
     protected Client $client;
+
     protected string $phoneNumberId;
+
     protected string $accessToken;
+
     protected string $apiVersion;
+
     protected string $apiBaseUrl;
 
     public function __construct(CatalogService $catalogService)
@@ -53,12 +58,12 @@ class WhatsAppService implements MessagingService
             ]);
 
             $body = json_decode($response->getBody()->getContents(), true);
-            Log::info("WhatsApp message sent successfully", [
+            Log::info('WhatsApp message sent successfully', [
                 'to' => $to,
                 'message_id' => $body['messages'][0]['id'] ?? null,
             ]);
         } catch (GuzzleException $e) {
-            Log::error("WhatsApp sendMessage error: " . $e->getMessage(), [
+            Log::error('WhatsApp sendMessage error: '.$e->getMessage(), [
                 'to' => $to,
                 'text' => $text,
                 'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,
@@ -107,10 +112,11 @@ class WhatsAppService implements MessagingService
     public function sendItems(string $to, ?string $groupSlug = null): void
     {
         $items = $this->catalogService->listItems($groupSlug);
-        $groupName = $groupSlug ? " in group '{$groupSlug}'" : "";
+        $groupName = $groupSlug ? " in group '{$groupSlug}'" : '';
 
         if ($items->isEmpty()) {
             $this->sendMessage($to, "No items found{$groupName}.");
+
             return;
         }
 
@@ -165,12 +171,12 @@ class WhatsAppService implements MessagingService
             ]);
 
             $body = json_decode($response->getBody()->getContents(), true);
-            Log::info("WhatsApp image sent successfully", [
+            Log::info('WhatsApp image sent successfully', [
                 'to' => $to,
                 'message_id' => $body['messages'][0]['id'] ?? null,
             ]);
         } catch (GuzzleException $e) {
-            Log::error("WhatsApp sendImageWithCaption error: " . $e->getMessage(), [
+            Log::error('WhatsApp sendImageWithCaption error: '.$e->getMessage(), [
                 'to' => $to,
                 'item_id' => $item->id,
                 'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,

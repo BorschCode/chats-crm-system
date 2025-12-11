@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use SergiX44\Nutgram\Nutgram;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use SergiX44\Nutgram\Nutgram;
 
 class TelegramWebhookController extends Controller
 {
@@ -24,9 +24,9 @@ class TelegramWebhookController extends Controller
 
             return response()->json(['status' => 'ok']);
         } catch (\Exception $e) {
-            Log::error('Telegram webhook error: ' . $e->getMessage(), [
+            Log::error('Telegram webhook error: '.$e->getMessage(), [
                 'exception' => $e,
-                'payload' => $request->all()
+                'payload' => $request->all(),
             ]);
 
             return response()->json(['status' => 'error'], 500);

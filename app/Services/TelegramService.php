@@ -3,13 +3,14 @@
 namespace App\Services;
 
 use App\Models\Item;
+use Illuminate\Support\Facades\Log;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Properties\ParseMode;
-use Illuminate\Support\Facades\Log;
 
 class TelegramService implements MessagingService
 {
     protected CatalogService $catalogService;
+
     protected Nutgram $bot;
 
     public function __construct(CatalogService $catalogService, Nutgram $bot)
@@ -27,9 +28,9 @@ class TelegramService implements MessagingService
                 parse_mode: ParseMode::MARKDOWN
             );
         } catch (\Exception $e) {
-            Log::error("Telegram sendMessage error: " . $e->getMessage(), [
+            Log::error('Telegram sendMessage error: '.$e->getMessage(), [
                 'chat_id' => $to,
-                'text' => $text
+                'text' => $text,
             ]);
             throw $e;
         }
@@ -75,10 +76,11 @@ class TelegramService implements MessagingService
     public function sendItems(string $to, ?string $groupSlug = null): void
     {
         $items = $this->catalogService->listItems($groupSlug);
-        $groupName = $groupSlug ? " in group '{$groupSlug}'" : "";
+        $groupName = $groupSlug ? " in group '{$groupSlug}'" : '';
 
         if ($items->isEmpty()) {
             $this->sendMessage($to, "No items found{$groupName}.");
+
             return;
         }
 
@@ -116,9 +118,9 @@ class TelegramService implements MessagingService
                 $this->sendMessage($to, $caption);
             }
         } catch (\Exception $e) {
-            Log::error("Telegram sendItemDetails error: " . $e->getMessage(), [
+            Log::error('Telegram sendItemDetails error: '.$e->getMessage(), [
                 'chat_id' => $to,
-                'item_id' => $item->id
+                'item_id' => $item->id,
             ]);
             // Fallback to text message on error
             $this->sendMessage($to, $caption);

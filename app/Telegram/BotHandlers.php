@@ -4,12 +4,13 @@ namespace App\Telegram;
 
 use App\Services\CatalogService;
 use App\Services\TelegramService;
-use SergiX44\Nutgram\Nutgram;
 use Illuminate\Support\Facades\Log;
+use SergiX44\Nutgram\Nutgram;
 
 class BotHandlers
 {
     protected CatalogService $catalogService;
+
     protected TelegramService $telegramService;
 
     public function __construct(
@@ -69,18 +70,18 @@ class BotHandlers
 
         // Exception handler
         $bot->onException(function (Nutgram $bot, \Throwable $exception) {
-            Log::error('Telegram bot error: ' . $exception->getMessage(), [
+            Log::error('Telegram bot error: '.$exception->getMessage(), [
                 'exception' => $exception,
-                'update' => $bot->update()
+                'update' => $bot->update(),
             ]);
 
             try {
                 $bot->sendMessage(
-                    text: "An error occurred while processing your request. Please try again later.",
+                    text: 'An error occurred while processing your request. Please try again later.',
                     chat_id: $bot->chatId()
                 );
             } catch (\Exception $e) {
-                Log::error('Failed to send error message: ' . $e->getMessage());
+                Log::error('Failed to send error message: '.$e->getMessage());
             }
         });
     }

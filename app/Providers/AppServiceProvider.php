@@ -5,8 +5,8 @@ namespace App\Providers;
 use App\Services\CatalogService;
 use App\Services\TelegramService;
 use App\Telegram\BotHandlers;
-use SergiX44\Nutgram\Nutgram;
 use Illuminate\Support\ServiceProvider;
+use SergiX44\Nutgram\Nutgram;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -18,6 +18,7 @@ class AppServiceProvider extends ServiceProvider
         // Register Nutgram bot as singleton
         $this->app->singleton(Nutgram::class, function ($app) {
             $config = config('services.telegram');
+
             return new Nutgram($config['bot_token']);
         });
 

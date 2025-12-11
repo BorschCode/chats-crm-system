@@ -26,6 +26,7 @@ class GroupFactory extends Factory
     public function definition(): array
     {
         $title = $this->faker->unique()->words(2, true);
+
         return [
             'title' => $title,
             'slug' => Str::slug($title),

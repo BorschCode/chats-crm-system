@@ -21,7 +21,6 @@ class CatalogService
     /**
      * List all items, optionally filtered by group slug.
      *
-     * @param string|null $groupSlug
      * @return Collection<int, Item>
      */
     public function listItems(?string $groupSlug = null): Collection
@@ -34,7 +33,7 @@ class CatalogService
                 $query->where('group_id', $group->id);
             } else {
                 // Return empty collection if group is not found
-                return new Collection();
+                return new Collection;
             }
         }
 
@@ -43,9 +42,6 @@ class CatalogService
 
     /**
      * Get a single item by slug.
-     *
-     * @param string $slug
-     * @return Item|null
      */
     public function getItem(string $slug): ?Item
     {
