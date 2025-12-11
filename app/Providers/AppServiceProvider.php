@@ -42,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS when behind a proxy (ngrok, load balancer, etc.)
+        if (request()->header('X-Forwarded-Proto') === 'https' || request()->header('X-Forwarded-Ssl') === 'on') {
+            \URL::forceScheme('https');
+        }
+
         // Register Telegram bot handlers
         if (config('services.telegram.bot_token')) {
             $bot = $this->app->make(Nutgram::class);
