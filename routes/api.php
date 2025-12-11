@@ -18,5 +18,9 @@ use Illuminate\Support\Facades\Route;
 
 // Webhook routes for messaging channels
 Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle']);
+
+// WhatsApp webhook (GET for verification, POST for messages)
+Route::get('/webhook/whatsapp', [WhatsAppWebhookController::class, 'verify']);
 Route::post('/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle']);
+
 Route::post('/webhook/instagram', [InstagramWebhookController::class, 'handle']);
