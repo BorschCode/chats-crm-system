@@ -1,13 +1,8 @@
 name: linter
 
 on:
-  push:
-    branches:
-      - develop
-      - main
   pull_request:
     branches:
-      - develop
       - main
 
 permissions:
@@ -25,9 +20,6 @@ jobs:
         with:
           php-version: '8.4'
           extensions: mbstring, xml, ctype, json, bcmath
-
-      - name: Add Flux Credentials Loaded From ENV
-        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
 
       - name: Install Dependencies
         run: |
