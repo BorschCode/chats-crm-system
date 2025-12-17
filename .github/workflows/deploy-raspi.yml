@@ -115,9 +115,9 @@ jobs:
           LOG_STACK=daily
           LOG_LEVEL=warning
 
-          DB_CONNECTION=pgsql
-          DB_HOST=172.17.0.1
-          DB_PORT=5432
+          DB_CONNECTION=mysql
+          DB_HOST=localhost
+          DB_PORT=3306
           DB_DATABASE=${{ vars.DB_DATABASE }}
           DB_USERNAME=${{ vars.DB_USERNAME }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
@@ -125,13 +125,8 @@ jobs:
           SESSION_DRIVER=database
           SESSION_LIFETIME=120
 
-          CACHE_STORE=redis
-          QUEUE_CONNECTION=redis
-
-          REDIS_CLIENT=phpredis
-          REDIS_HOST=172.17.0.1
-          REDIS_PORT=6379
-          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          CACHE_STORE=database
+          QUEUE_CONNECTION=database
 
           MAIL_MAILER=${{ vars.MAIL_MAILER }}
           MAIL_HOST=${{ vars.MAIL_HOST }}
@@ -143,9 +138,6 @@ jobs:
 
           TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_BOT_USERNAME=${{ vars.TELEGRAM_BOT_USERNAME }}
-
-          FLUX_USERNAME=${{ secrets.FLUX_USERNAME }}
-          FLUX_LICENSE_KEY=${{ secrets.FLUX_LICENSE_KEY }}
           EOF
 
       - name: Deploy with Docker Compose

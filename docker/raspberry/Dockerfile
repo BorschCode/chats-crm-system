@@ -5,7 +5,7 @@ FROM php:8.5-fpm-alpine AS base
 RUN apk add --no-cache \
     nginx \
     supervisor \
-    postgresql-dev \
+    mysql-dev \
     libzip-dev \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -20,18 +20,12 @@ RUN apk add --no-cache \
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
-        pdo_pgsql \
-        pgsql \
+        pdo_mysql \
+        mysqli \
         zip \
         gd \
         bcmath \
         opcache
-
-# Install Redis extension
-RUN apk add --no-cache --virtual .build-deps autoconf g++ make \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && apk del .build-deps
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
