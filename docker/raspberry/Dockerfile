@@ -5,11 +5,13 @@ FROM php:8.5-fpm-alpine AS base
 RUN apk add --no-cache \
     nginx \
     supervisor \
-    mysql-dev \
+    mariadb-dev \
+    mariadb-client \
     libzip-dev \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
+    oniguruma-dev \
     git \
     curl \
     zip \
@@ -18,7 +20,7 @@ RUN apk add --no-cache \
     npm
 
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
         mysqli \
