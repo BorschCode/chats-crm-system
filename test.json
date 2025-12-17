@@ -1,0 +1,32 @@
+{
+    "method": "GET",
+    "url": "http://023cfd40a8f9.ngrok-free.app/api/webhook/whatsapp?hub.challenge=146983850&hub.mode=subscribe&hub.verify_token=JuI38O7KmXfv",
+    "headers": {
+        "host": [
+            "023cfd40a8f9.ngrok-free.app"
+        ],
+        "user-agent": [
+            "facebookplatform/1.0 (+http://developers.facebook.com)"
+        ],
+        "accept": [
+            "*/*"
+        ],
+        "accept-encoding": [
+            "deflate, gzip"
+        ],
+        "x-forwarded-for": [
+            "2a03:2880:22ff:4e::"
+        ],
+        "x-forwarded-host": [
+            "023cfd40a8f9.ngrok-free.app"
+        ],
+        "x-forwarded-proto": [
+            "https"
+        ]
+    },
+    "query_params": {
+        "hub_mode": "subscribe",
+        "hub_challenge": "146983850",
+        "hub_verify_token": "JuI38O7KmXfv"
+    }
+}

@@ -1,0 +1,119 @@
+name: Build and Push Docker Image
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Custom tag for the image'
+        required: false
+        default: 'latest'
+
+jobs:
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    environment: Production
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKER_USERNAME }}/chats-crm-system
+          flavor: |
+            latest=auto
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix=sha-
+            type=raw,value=${{ github.event.inputs.tag }},enable=${{ github.event_name == 'workflow_dispatch' }}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Create .env for build
+        run: |
+          echo "FLUX_USERNAME=${{ secrets.FLUX_USERNAME }}" >> .env
+          echo "FLUX_LICENSE_KEY=${{ secrets.FLUX_LICENSE_KEY }}" >> .env
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/raspberry/Dockerfile
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/chats-crm-system:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/chats-crm-system:buildcache,mode=max
+          secret-files: |
+            "env=.env"
+          build-args: |
+            FLUX_USERNAME=${{ secrets.FLUX_USERNAME }}
+            FLUX_LICENSE_KEY=${{ secrets.FLUX_LICENSE_KEY }}
+
+      - name: Print Image Tags
+        run: |
+          echo "Pushed image tags:"
+          echo "${{ steps.meta.outputs.tags }}"
+
+  trigger-deploy:
+    name: Trigger Deployment on Raspberry Pi
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Extract version tag
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            TAG=${{ github.event.release.tag_name }}
+            TAG=${TAG#v}
+          else
+            TAG="latest"
+          fi
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Triggering deploy for version: ${TAG}"
+
+      - name: Trigger raspberry deploy workflow
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy-raspi.yml',
+              ref: 'main',
+              inputs: {
+                image_tag: '${{ steps.version.outputs.tag }}'
+              }
+            });
+            console.log("Deployment started for tag: ${{ steps.version.outputs.tag }}")
