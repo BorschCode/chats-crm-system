@@ -1,17 +1,23 @@
 # Multi-stage build for Laravel application
-FROM php:8.5-fpm-alpine AS base
+FROM php:8.4-fpm-alpine AS base
 
-# Install system dependencies
+# Install system dependencies and build tools
 RUN apk add --no-cache \
     nginx \
     supervisor \
     mariadb-dev \
     mariadb-client \
     libzip-dev \
+    libpng \
     libpng-dev \
+    libjpeg-turbo \
     libjpeg-turbo-dev \
+    freetype \
     freetype-dev \
     oniguruma-dev \
+    autoconf \
+    g++ \
+    make \
     git \
     curl \
     zip \
@@ -20,14 +26,17 @@ RUN apk add --no-cache \
     npm
 
 # Install PHP extensions
-RUN docker-php-ext-configure gd --with-freetype=/usr/include/ --with-jpeg=/usr/include/ \
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
         mysqli \
         zip \
-        gd \
         bcmath \
-        opcache
+        opcache \
+        gd
+
+# Clean up build dependencies but keep runtime ones
+RUN apk del autoconf g++ make
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
