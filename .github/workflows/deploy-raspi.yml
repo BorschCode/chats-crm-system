@@ -166,16 +166,25 @@ jobs:
           echo "App failed to start"
           exit 1
 
-      - name: Test database connection
+      - name: Check environment and test connection
         run: |
           docker compose -f compose.raspberry.yml exec -T app php artisan config:clear
           docker compose -f compose.raspberry.yml exec -T app php artisan cache:clear
-          echo "Testing database connection..."
-          docker compose -f compose.raspberry.yml exec -T app php -r "try { \$pdo = new PDO('mysql:host=172.17.0.1;port=3306;dbname=${{ vars.DB_DATABASE }}', '${{ vars.DB_USERNAME }}', '${{ secrets.DB_PASSWORD }}'); echo 'Database connection successful!'; } catch (Exception \$e) { echo 'Database connection failed: ' . \$e->getMessage(); exit(1); }"
+          echo "=== Environment Check ==="
+          docker compose -f compose.raspberry.yml exec -T app php -r "echo 'DB_HOST: ' . env('DB_HOST') . PHP_EOL;"
+          docker compose -f compose.raspberry.yml exec -T app php -r "echo 'DB_PORT: ' . env('DB_PORT') . PHP_EOL;"
+          docker compose -f compose.raspberry.yml exec -T app php -r "echo 'DB_DATABASE: ' . env('DB_DATABASE') . PHP_EOL;"
+          docker compose -f compose.raspberry.yml exec -T app php -r "echo 'DB_USERNAME: ' . env('DB_USERNAME') . PHP_EOL;"
+          echo "=== Testing Database Connection ==="
+          docker compose -f compose.raspberry.yml exec -T app php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'Database connected successfully!'; } catch (Exception \$e) { echo 'Connection failed: ' . \$e->getMessage(); throw \$e; }"
 
       - name: Run database migrations
         run: |
-          docker compose -f compose.raspberry.yml exec -T app php artisan migrate --force
+          docker compose -f compose.raspberry.yml exec -T app php artisan migrate --force || {
+            echo "=== Migration failed, checking logs ==="
+            docker compose -f compose.raspberry.yml logs --tail=50 app
+            exit 1
+          }
           echo "Migrations completed"
 
       - name: Optimize application
