@@ -104,7 +104,7 @@ jobs:
           APP_NAME="${{ vars.APP_NAME }}"
           APP_ENV=production
           APP_KEY=${{ secrets.APP_KEY }}
-          APP_DEBUG=false
+          APP_DEBUG=${{ vars.APP_DEBUG }}
           APP_URL=${{ vars.APP_URL }}
           APP_PORT=${{ vars.APP_PORT }}
 
@@ -169,14 +169,19 @@ jobs:
       - name: Check environment and test connection
         run: |
           docker compose -f compose.raspberry.yml exec -T app php artisan config:clear
-          docker compose -f compose.raspberry.yml exec -T app php artisan cache:clear
           echo "=== Environment Check ==="
           docker compose -f compose.raspberry.yml exec -T app php -r "echo 'DB_HOST: ' . env('DB_HOST') . PHP_EOL;"
           docker compose -f compose.raspberry.yml exec -T app php -r "echo 'DB_PORT: ' . env('DB_PORT') . PHP_EOL;"
           docker compose -f compose.raspberry.yml exec -T app php -r "echo 'DB_DATABASE: ' . env('DB_DATABASE') . PHP_EOL;"
           docker compose -f compose.raspberry.yml exec -T app php -r "echo 'DB_USERNAME: ' . env('DB_USERNAME') . PHP_EOL;"
           echo "=== Testing Database Connection ==="
-          docker compose -f compose.raspberry.yml exec -T app php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'Database connected successfully!'; } catch (Exception \$e) { echo 'Connection failed: ' . \$e->getMessage(); throw \$e; }"
+          docker compose -f compose.raspberry.yml exec -T app php artisan tinker --execute="try { DB::connection()->getPdo(); echo 'Database connected successfully!' . PHP_EOL; } catch (Exception \$e) { echo 'Connection failed: ' . \$e->getMessage() . PHP_EOL; echo 'Trace: ' . \$e->getTraceAsString() . PHP_EOL; throw \$e; }"
+          echo "=== Clearing application cache ==="
+          docker compose -f compose.raspberry.yml exec -T app php artisan cache:clear
+          echo "=== Checking worker logs ==="
+          docker compose -f compose.raspberry.yml exec -T app cat /var/www/html/storage/logs/worker.log | tail -50 || echo "No worker logs yet"
+          echo "=== Checking Laravel application logs ==="
+          docker compose -f compose.raspberry.yml exec -T app cat /var/www/html/storage/logs/laravel.log | tail -50 || echo "No Laravel logs yet"
 
       - name: Run database migrations
         run: |
