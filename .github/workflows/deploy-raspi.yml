@@ -111,8 +111,7 @@ jobs:
           APP_LOCALE=en
           APP_FALLBACK_LOCALE=en
 
-          LOG_CHANNEL=stack
-          LOG_STACK=daily
+          LOG_CHANNEL=stderr
           LOG_LEVEL=warning
 
           DB_CONNECTION=mysql

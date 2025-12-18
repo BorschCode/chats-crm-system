@@ -6,6 +6,9 @@ use App\Models\Group;
 use App\Services\CatalogService;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\View\View as Viewilluminate;
 
 class ItemList extends Component
 {
@@ -28,12 +31,12 @@ class ItemList extends Component
 
     protected CatalogService $catalogService;
 
-    public function boot(CatalogService $catalogService)
+    public function boot(CatalogService $catalogService): void
     {
         $this->catalogService = $catalogService;
     }
 
-    public function mount(?string $groupSlug = null)
+    public function mount(?string $groupSlug = null): void
     {
         $this->groupSlug = $groupSlug;
 
@@ -46,33 +49,33 @@ class ItemList extends Component
         }
     }
 
-    public function updatingSearch()
+    public function updatingSearch(): void
     {
         $this->resetPage();
     }
 
-    public function updatingGroupFilter()
+    public function updatingGroupFilter(): void
     {
         $this->resetPage();
     }
 
-    public function updatingMinPrice()
+    public function updatingMinPrice(): void
     {
         $this->resetPage();
     }
 
-    public function updatingMaxPrice()
+    public function updatingMaxPrice(): void
     {
         $this->resetPage();
     }
 
-    public function clearFilters()
+    public function clearFilters(): void
     {
         $this->reset(['search', 'groupFilter', 'minPrice', 'maxPrice']);
         $this->resetPage();
     }
 
-    public function sortBy(string $field)
+    public function sortBy(string $field): void
     {
         if ($this->sortBy === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -83,7 +86,7 @@ class ItemList extends Component
         $this->resetPage();
     }
 
-    public function render()
+    public function render(): Factory|View|Viewilluminate
     {
         return view('livewire.item-list', [
             'items' => $this->catalogService->listItemsPaginated(
