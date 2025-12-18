@@ -116,7 +116,7 @@ jobs:
           LOG_LEVEL=warning
 
           DB_CONNECTION=mysql
-          DB_HOST=172.17.0.1
+          DB_HOST=${{ vars.DB_HOST }}
           DB_PORT=3306
           DB_DATABASE=${{ vars.DB_DATABASE }}
           DB_USERNAME=${{ vars.DB_USERNAME }}
