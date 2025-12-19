@@ -41,6 +41,45 @@ class WhatsAppService implements MessagingService
         ]);
     }
 
+    public function markAsRead(string $messageId): void
+    {
+        try {
+            $response = $this->client->post("{$this->phoneNumberId}/messages", [
+                'json' => [
+                    'messaging_product' => 'whatsapp',
+                    'status' => 'read',
+                    'message_id' => $messageId,
+                ],
+            ]);
+
+            Log::info('WhatsApp message marked as read', [
+                'message_id' => $messageId,
+            ]);
+        } catch (GuzzleException $e) {
+            Log::warning('WhatsApp markAsRead error: '.$e->getMessage(), [
+                'message_id' => $messageId,
+                'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,
+            ]);
+            // Don't throw - this is not critical
+        }
+    }
+
+    public function sendTypingIndicator(string $to): void
+    {
+        // NOTE: WhatsApp Cloud API does not currently support typing indicators
+        // like Telegram does. The best practice is to respond quickly and use
+        // read receipts to acknowledge messages.
+        //
+        // This method is kept as a placeholder for future API updates
+        // or for logging purposes.
+
+        Log::debug('Typing indicator requested (not supported by WhatsApp Cloud API)', [
+            'to' => $to,
+        ]);
+
+        // No-op: WhatsApp Cloud API doesn't support typing indicators
+    }
+
     public function sendInteractiveList(string $to, array $listData): void
     {
         try {
@@ -173,6 +212,37 @@ class WhatsAppService implements MessagingService
 
             throw $e;
         }
+    }
+
+    public function sendWelcomeMenu(string $to): void
+    {
+        $this->sendInteractiveList($to, [
+            'header' => 'Welcome! 👋',
+            'body' => "We are an internet shop which provides items.\n\nChoose an option below to explore our catalog:",
+            'button' => 'Browse Menu',
+            'sections' => [
+                [
+                    'title' => 'Main Menu',
+                    'rows' => [
+                        [
+                            'id' => 'menu_catalog',
+                            'title' => 'Catalog',
+                            'description' => 'Browse product groups',
+                        ],
+                        [
+                            'id' => 'menu_groups',
+                            'title' => 'Groups',
+                            'description' => 'View all product groups',
+                        ],
+                        [
+                            'id' => 'menu_items',
+                            'title' => 'Items',
+                            'description' => 'View all available items',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
     }
 
     public function sendCatalog(string $to): void

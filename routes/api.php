@@ -3,6 +3,7 @@
 use App\Http\Controllers\InstagramWebhookController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\WhatsAppWebhookController;
+use App\Http\Middleware\VerifyWhatsAppSignature;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,7 +21,11 @@ use Illuminate\Support\Facades\Route;
 Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle']);
 
 // WhatsApp webhook (GET for verification, POST for messages)
+// GET request doesn't need signature verification (used for webhook setup)
 Route::get('/webhook/whatsapp', [WhatsAppWebhookController::class, 'verify']);
-Route::post('/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle']);
+
+// POST request MUST have signature verification to prevent spoofed messages
+Route::post('/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle'])
+    ->middleware(VerifyWhatsAppSignature::class);
 
 Route::post('/webhook/instagram', [InstagramWebhookController::class, 'handle']);

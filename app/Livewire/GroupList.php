@@ -3,10 +3,10 @@
 namespace App\Livewire;
 
 use App\Services\CatalogService;
-use Livewire\Component;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\View as Viewilluminate;
+use Livewire\Component;
 
 class GroupList extends Component
 {
