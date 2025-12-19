@@ -182,10 +182,19 @@ class WhatsAppWebhookController extends Controller
                 'exception' => $e->getMessage(),
             ]);
 
-            $this->whatsAppService->sendMessage(
-                $from,
-                'An error occurred while processing your request. Please try again later.'
-            );
+            // Try to send error message, but don't fail if it doesn't work
+            try {
+                $this->whatsAppService->sendMessage(
+                    $from,
+                    'An error occurred while processing your request. Please try again later.'
+                );
+            } catch (\Exception $sendError) {
+                // Log but don't throw - webhook was processed successfully
+                Log::warning('Could not send error message to user', [
+                    'from' => $from,
+                    'error' => $sendError->getMessage(),
+                ]);
+            }
         }
     }
 }

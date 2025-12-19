@@ -63,11 +63,45 @@ class WhatsAppService implements MessagingService
                 'message_id' => $body['messages'][0]['id'] ?? null,
             ]);
         } catch (GuzzleException $e) {
-            Log::error('WhatsApp sendMessage error: '.$e->getMessage(), [
+            $errorDetails = [
                 'to' => $to,
                 'text' => $text,
-                'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,
-            ]);
+            ];
+
+            if ($e->hasResponse()) {
+                $responseBody = $e->getResponse()->getBody()->getContents();
+                $errorDetails['response'] = $responseBody;
+
+                // Parse Meta API error
+                $errorData = json_decode($responseBody, true);
+                if (isset($errorData['error']['code'])) {
+                    $errorCode = $errorData['error']['code'];
+                    $errorMessage = $errorData['error']['message'] ?? 'Unknown error';
+
+                    // Special handling for common errors
+                    if ($errorCode === 131030) {
+                        Log::warning('WhatsApp: Recipient not in allowed list (test mode restriction)', [
+                            'to' => $to,
+                            'error_code' => $errorCode,
+                            'hint' => 'Add this number to your WhatsApp Business API allowed list in Meta Developer Console',
+                            'docs' => 'https://developers.facebook.com/docs/whatsapp/cloud-api/get-started#send-messages',
+                        ]);
+                    } elseif ($errorCode === 190) {
+                        Log::error('WhatsApp: Access token expired or invalid', [
+                            'error_code' => $errorCode,
+                            'hint' => 'Generate a new access token in Meta Developer Console',
+                        ]);
+                    } else {
+                        Log::error('WhatsApp API error: '.$errorMessage, [
+                            'error_code' => $errorCode,
+                            'to' => $to,
+                        ]);
+                    }
+                }
+            } else {
+                Log::error('WhatsApp sendMessage error: '.$e->getMessage(), $errorDetails);
+            }
+
             throw $e;
         }
     }
