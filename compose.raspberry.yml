@@ -11,6 +11,7 @@ services:
       - app-network
     volumes:
       - ./storage/app:/var/www/html/storage/app
+      - app-logs:/var/www/html/storage/logs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]
       interval: 30s
@@ -19,6 +20,10 @@ services:
       start_period: 40s
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+volumes:
+  app-logs:
+    driver: local
 
 networks:
   app-network:
