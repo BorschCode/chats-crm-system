@@ -37,16 +37,23 @@ return [
 
     'telegram' => [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'bot_username' => env('TELEGRAM_BOT_USERNAME'),
         'webhook_url' => env('TELEGRAM_WEBHOOK_URL'),
         'mode' => env('TELEGRAM_MODE', 'polling'),
+    ],
+
+    'instagram' => [
+        'username' => env('INSTAGRAM_USERNAME'),
     ],
 
     'whatsapp' => [
         'access_token' => env('WHATSAPP_ACCESS_TOKEN'),
         'phone_number_id' => env('WHATSAPP_PHONE_NUMBER_ID'),
         'webhook_verify_token' => env('WHATSAPP_WEBHOOK_VERIFY_TOKEN'),
+        'app_secret' => env('WHATSAPP_APP_SECRET'),
         'api_version' => env('WHATSAPP_API_VERSION', 'v21.0'),
         'business_account_id' => env('WHATSAPP_BUSINESS_ACCOUNT_ID'),
+        'business_phone' => env('WHATSAPP_BUSINESS_PHONE'),
         'api_base_url' => 'https://graph.facebook.com',
     ],
 

@@ -36,6 +36,20 @@ class TelegramService implements MessagingService
         }
     }
 
+    public function sendWelcomeMenu(string $to): void
+    {
+        $text = "*Welcome! 👋*\n\n";
+        $text .= "We are an internet shop which provides items.\n\n";
+        $text .= "*Available Commands:*\n";
+        $text .= "/catalog - Browse product groups\n";
+        $text .= "/groups - View all product groups\n";
+        $text .= "/items - View all available items\n";
+        $text .= "/items {slug} - Items by group\n";
+        $text .= "/item {slug} - Item details\n";
+
+        $this->sendMessage($to, $text);
+    }
+
     public function sendCatalog(string $to): void
     {
         $groups = $this->catalogService->listGroups();

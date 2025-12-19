@@ -57,7 +57,7 @@ class DatabaseSeeder extends Seeder
                 'slug' => Str::slug($item['title']),
                 'description' => $item['description'],
                 'price' => $item['price'],
-                'image' => 'https://picsum.photos/600/400?random=' . rand(1, 1000),
+                'image' => 'https://picsum.photos/600/400?random='.rand(1, 1000),
                 'group_id' => $electronics->id,
             ]);
         }
@@ -90,7 +90,7 @@ class DatabaseSeeder extends Seeder
                 'slug' => Str::slug($item['title']),
                 'description' => $item['description'],
                 'price' => $item['price'],
-                'image' => 'https://picsum.photos/600/400?random=' . rand(1, 1000),
+                'image' => 'https://picsum.photos/600/400?random='.rand(1, 1000),
                 'group_id' => $clothing->id,
             ]);
         }
@@ -123,7 +123,7 @@ class DatabaseSeeder extends Seeder
                 'slug' => Str::slug($item['title']),
                 'description' => $item['description'],
                 'price' => $item['price'],
-                'image' => 'https://picsum.photos/600/400?random=' . rand(1, 1000),
+                'image' => 'https://picsum.photos/600/400?random='.rand(1, 1000),
                 'group_id' => $homeGarden->id,
             ]);
         }
@@ -156,7 +156,7 @@ class DatabaseSeeder extends Seeder
                 'slug' => Str::slug($item['title']),
                 'description' => $item['description'],
                 'price' => $item['price'],
-                'image' => 'https://picsum.photos/600/400?random=' . rand(1, 1000),
+                'image' => 'https://picsum.photos/600/400?random='.rand(1, 1000),
                 'group_id' => $sports->id,
             ]);
         }
@@ -189,7 +189,7 @@ class DatabaseSeeder extends Seeder
                 'slug' => Str::slug($item['title']),
                 'description' => $item['description'],
                 'price' => $item['price'],
-                'image' => 'https://picsum.photos/600/400?random=' . rand(1, 1000),
+                'image' => 'https://picsum.photos/600/400?random='.rand(1, 1000),
                 'group_id' => $booksMedia->id,
             ]);
         }
@@ -222,7 +222,7 @@ class DatabaseSeeder extends Seeder
                 'slug' => Str::slug($item['title']),
                 'description' => $item['description'],
                 'price' => $item['price'],
-                'image' => 'https://picsum.photos/600/400?random=' . rand(1, 1000),
+                'image' => 'https://picsum.photos/600/400?random='.rand(1, 1000),
                 'group_id' => $foodBeverages->id,
             ]);
         }

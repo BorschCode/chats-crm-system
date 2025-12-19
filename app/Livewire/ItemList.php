@@ -4,11 +4,11 @@ namespace App\Livewire;
 
 use App\Models\Group;
 use App\Services\CatalogService;
-use Livewire\Component;
-use Livewire\WithPagination;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\View as Viewilluminate;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class ItemList extends Component
 {

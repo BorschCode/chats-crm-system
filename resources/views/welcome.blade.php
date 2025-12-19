@@ -28,6 +28,8 @@
                     @livewire(\App\Livewire\GroupList::class)
                 @elseif (Route::currentRouteName() === 'item.show')
                     @livewire(\App\Livewire\ItemShow::class, ['slug' => Route::current()->parameter('slug')])
+                @elseif (Route::currentRouteName() === 'about')
+                    @livewire(\App\Livewire\About::class)
                 @endif
             </div>
         </div>
@@ -42,6 +44,10 @@
                     <a href="{{ route('groups.list') }}" wire:navigate
                        class="group inline-flex items-center hover:text-gray-700 focus:outline focus:outline-2 focus:outline-red-500">
                         All Groups
+                    </a>
+                    <a href="{{ route('about') }}" wire:navigate
+                       class="group inline-flex items-center hover:text-gray-700 focus:outline focus:outline-2 focus:outline-red-500">
+                        About
                     </a>
                 </div>
             </div>
