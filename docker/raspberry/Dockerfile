@@ -93,8 +93,10 @@ COPY docker/raspberry/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/raspberry/php.ini /etc/php/8.4/cli/conf.d/99-custom.ini
 COPY docker/raspberry/php.ini /etc/php/8.4/fpm/conf.d/99-custom.ini
 
-# Configure PHP-FPM to use port 9000
-RUN sed -i 's/listen = \/run\/php\/php8.4-fpm.sock/listen = 127.0.0.1:9000/' /etc/php/8.4/fpm/pool.d/www.conf
+# Configure PHP-FPM to use port 9000 and catch worker output
+RUN sed -i 's/listen = \/run\/php\/php8.4-fpm.sock/listen = 127.0.0.1:9000/' /etc/php/8.4/fpm/pool.d/www.conf \
+    && echo "catch_workers_output = yes" >> /etc/php/8.4/fpm/pool.d/www.conf \
+    && echo "decorate_workers_output = no" >> /etc/php/8.4/fpm/pool.d/www.conf
 
 # Create PHP-FPM log file with proper permissions
 RUN install -o www-data -g www-data -m 664 /dev/null /var/log/php8.4-fpm.log
