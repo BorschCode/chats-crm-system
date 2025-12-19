@@ -38,11 +38,16 @@ Meta/Facebook signs every webhook request with a cryptographic signature using y
 
 ### 1. Get Your App Secret from Meta
 
+⚠️ **Important**: Use the **App Secret**, NOT the Client Token!
+
+See the detailed guide: [WHATSAPP-APP-SECRET-GUIDE.md](./WHATSAPP-APP-SECRET-GUIDE.md)
+
+Quick steps:
 1. Go to [Facebook Developers Console](https://developers.facebook.com/)
 2. Select your WhatsApp Business App
 3. Navigate to **Settings > Basic**
 4. Find your **App Secret** (click "Show" to reveal it)
-5. Copy the App Secret
+5. Copy the entire App Secret (NOT the Client Token)
 
 ### 2. Add App Secret to Environment
 
