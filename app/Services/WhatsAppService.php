@@ -41,6 +41,69 @@ class WhatsAppService implements MessagingService
         ]);
     }
 
+    public function sendInteractiveList(string $to, array $listData): void
+    {
+        try {
+            $payload = [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $to,
+                'type' => 'interactive',
+                'interactive' => [
+                    'type' => 'list',
+                    'body' => [
+                        'text' => $listData['body'],
+                    ],
+                    'action' => [
+                        'button' => $listData['button'],
+                        'sections' => $listData['sections'],
+                    ],
+                ],
+            ];
+
+            // Add optional header if provided
+            if (isset($listData['header'])) {
+                $payload['interactive']['header'] = [
+                    'type' => 'text',
+                    'text' => $listData['header'],
+                ];
+            }
+
+            // Add optional footer if provided
+            if (isset($listData['footer'])) {
+                $payload['interactive']['footer'] = [
+                    'text' => $listData['footer'],
+                ];
+            }
+
+            $response = $this->client->post("{$this->phoneNumberId}/messages", [
+                'json' => $payload,
+            ]);
+
+            $body = json_decode($response->getBody()->getContents(), true);
+            Log::info('WhatsApp interactive list sent successfully', [
+                'to' => $to,
+                'message_id' => $body['messages'][0]['id'] ?? null,
+            ]);
+        } catch (GuzzleException $e) {
+            $errorDetails = [
+                'to' => $to,
+                'list_data' => $listData,
+            ];
+
+            if ($e->hasResponse()) {
+                $responseBody = $e->getResponse()->getBody()->getContents();
+                $errorDetails['response'] = $responseBody;
+
+                Log::error('WhatsApp sendInteractiveList error: '.$e->getMessage(), $errorDetails);
+            } else {
+                Log::error('WhatsApp sendInteractiveList error: '.$e->getMessage(), $errorDetails);
+            }
+
+            throw $e;
+        }
+    }
+
     public function sendMessage(string $to, string $text): void
     {
         try {
@@ -91,6 +154,12 @@ class WhatsAppService implements MessagingService
                             'error_code' => $errorCode,
                             'hint' => 'Generate a new access token in Meta Developer Console',
                         ]);
+                    } elseif ($errorCode === 100 && str_contains($errorMessage, '4096')) {
+                        Log::error('WhatsApp: Message too long (exceeds 4096 character limit)', [
+                            'error_code' => $errorCode,
+                            'message_length' => strlen($text),
+                            'hint' => 'Message should be split into multiple messages with pagination',
+                        ]);
                     } else {
                         Log::error('WhatsApp API error: '.$errorMessage, [
                             'error_code' => $errorCode,
@@ -109,38 +178,99 @@ class WhatsAppService implements MessagingService
     public function sendCatalog(string $to): void
     {
         $groups = $this->catalogService->listGroups();
-        $text = "*Welcome to the Catalog!*\n\n";
-        $text .= "Browse our product groups:\n\n";
 
-        foreach ($groups as $group) {
-            $text .= "📦 items {$group->slug} - {$group->title}\n";
+        if ($groups->isEmpty()) {
+            $this->sendMessage($to, 'No product groups available at the moment.');
+
+            return;
         }
 
-        $text .= "\n*Available Commands:*\n";
-        $text .= "• catalog - Show this catalog\n";
-        $text .= "• groups - List all groups\n";
-        $text .= "• items - List all items\n";
-        $text .= "• items {slug} - Items by group\n";
-        $text .= "• item {slug} - Item details\n";
+        // Interactive List Messages have a limit of 10 rows per section and 10 sections max
+        // We'll use one section with up to 10 groups
+        $rows = [];
+        $count = 0;
 
-        $this->sendMessage($to, $text);
+        foreach ($groups as $group) {
+            if ($count >= 10) {
+                break; // WhatsApp limit: max 10 rows per section
+            }
+
+            $rows[] = [
+                'id' => "group_{$group->slug}",
+                'title' => substr($group->title, 0, 24), // Max 24 characters
+                'description' => $group->description
+                    ? substr($group->description, 0, 72) // Max 72 characters
+                    : "View items in {$group->title}",
+            ];
+            $count++;
+        }
+
+        $this->sendInteractiveList($to, [
+            'body' => "Welcome to our catalog! 🛍️\n\nBrowse our product groups and discover amazing items.",
+            'button' => 'View Groups',
+            'sections' => [
+                [
+                    'title' => 'Product Groups',
+                    'rows' => $rows,
+                ],
+            ],
+        ]);
+
+        // If there are more than 10 groups, send remaining as text
+        if ($groups->count() > 10) {
+            $remainingText = "\n*Additional Groups:*\n";
+            foreach ($groups->skip(10) as $group) {
+                $remainingText .= "• items {$group->slug} - {$group->title}\n";
+            }
+            $this->sendMessage($to, $remainingText);
+        }
     }
 
     public function sendGroups(string $to): void
     {
         $groups = $this->catalogService->listGroups();
-        $text = "*Available Product Groups:*\n\n";
+
+        // WhatsApp limit is 4096 characters, use 3800 to be safe
+        $maxLength = 3800;
+        $messages = [];
+        $currentMessage = "*Available Product Groups:*\n\n";
 
         foreach ($groups as $group) {
-            $text .= "📁 *{$group->title}*\n";
-            $text .= "   Slug: {$group->slug}\n";
+            $groupText = "📁 *{$group->title}*\n";
+            $groupText .= "   Slug: {$group->slug}\n";
             if ($group->description) {
-                $text .= "   {$group->description}\n";
+                $groupText .= "   {$group->description}\n";
             }
-            $text .= "\n";
+            $groupText .= "\n";
+
+            // Check if adding this group would exceed the limit
+            if (strlen($currentMessage.$groupText) > $maxLength) {
+                $messages[] = $currentMessage;
+                $currentMessage = $groupText;
+            } else {
+                $currentMessage .= $groupText;
+            }
         }
 
-        $this->sendMessage($to, $text);
+        // Add the last message
+        if (! empty($currentMessage)) {
+            $messages[] = $currentMessage;
+        }
+
+        // Send all messages with page numbers if multiple pages
+        $totalPages = count($messages);
+        foreach ($messages as $index => $message) {
+            if ($totalPages > 1) {
+                $pageNumber = $index + 1;
+                $message .= "\n_Page {$pageNumber} of {$totalPages}_";
+            }
+            $this->sendMessage($to, $message);
+
+            // Small delay between messages to avoid rate limiting
+            if ($index < $totalPages - 1) {
+                usleep(500000); // 0.5 second delay
+            }
+        }
     }
 
     public function sendItems(string $to, ?string $groupSlug = null): void
@@ -154,15 +284,44 @@ class WhatsAppService implements MessagingService
             return;
         }
 
-        $text = "*Available Items{$groupName}:*\n\n";
+        // WhatsApp limit is 4096 characters, use 3800 to be safe
+        $maxLength = 3800;
+        $messages = [];
+        $currentMessage = "*Available Items{$groupName}:*\n\n";
 
         foreach ($items as $item) {
-            $text .= "🛍️ *{$item->title}*\n";
-            $text .= "   Price: \${$item->price}\n";
-            $text .= "   View: item {$item->slug}\n\n";
+            $itemText = "🛍️ *{$item->title}*\n";
+            $itemText .= "   Price: \${$item->price}\n";
+            $itemText .= "   View: item {$item->slug}\n\n";
+
+            // Check if adding this item would exceed the limit
+            if (strlen($currentMessage.$itemText) > $maxLength) {
+                $messages[] = $currentMessage;
+                $currentMessage = $itemText;
+            } else {
+                $currentMessage .= $itemText;
+            }
         }
 
-        $this->sendMessage($to, $text);
+        // Add the last message
+        if (! empty($currentMessage)) {
+            $messages[] = $currentMessage;
+        }
+
+        // Send all messages with page numbers if multiple pages
+        $totalPages = count($messages);
+        foreach ($messages as $index => $message) {
+            if ($totalPages > 1) {
+                $pageNumber = $index + 1;
+                $message .= "\n_Page {$pageNumber} of {$totalPages}_";
+            }
+            $this->sendMessage($to, $message);
+
+            // Small delay between messages to avoid rate limiting
+            if ($index < $totalPages - 1) {
+                usleep(500000); // 0.5 second delay
+            }
+        }
     }
 
     public function sendItemDetails(string $to, Item $item): void

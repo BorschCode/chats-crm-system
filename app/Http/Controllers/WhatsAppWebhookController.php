@@ -116,10 +116,18 @@ class WhatsAppWebhookController extends Controller
         $from = $message['from'];
         $messageId = $message['id'];
         $timestamp = $message['timestamp'];
+        $messageType = $message['type'];
+
+        // Handle interactive list responses
+        if ($messageType === 'interactive') {
+            $this->processInteractiveMessage($message, $from);
+
+            return;
+        }
 
         // Only process text messages
-        if ($message['type'] !== 'text') {
-            Log::info('Ignoring non-text message', ['type' => $message['type']]);
+        if ($messageType !== 'text') {
+            Log::info('Ignoring non-text/non-interactive message', ['type' => $messageType]);
 
             return;
         }
@@ -195,6 +203,76 @@ class WhatsAppWebhookController extends Controller
                     'error' => $sendError->getMessage(),
                 ]);
             }
+        }
+    }
+
+    protected function processInteractiveMessage(array $message, string $from): void
+    {
+        $interactive = $message['interactive'] ?? [];
+        $type = $interactive['type'] ?? null;
+
+        Log::info('Processing WhatsApp interactive message', [
+            'from' => $from,
+            'interactive_type' => $type,
+            'data' => $interactive,
+        ]);
+
+        // Handle list reply
+        if ($type === 'list_reply') {
+            $selectedId = $interactive['list_reply']['id'] ?? null;
+
+            if (! $selectedId) {
+                Log::warning('Interactive list reply received without ID', ['from' => $from]);
+
+                return;
+            }
+
+            // Parse the selected ID (format: "group_{slug}")
+            if (str_starts_with($selectedId, 'group_')) {
+                $groupSlug = substr($selectedId, 6); // Remove "group_" prefix
+                Log::info('User selected group from interactive list', [
+                    'from' => $from,
+                    'group_slug' => $groupSlug,
+                ]);
+
+                try {
+                    $this->whatsAppService->sendItems($from, $groupSlug);
+                } catch (\Exception $e) {
+                    Log::error('Error sending items for selected group', [
+                        'from' => $from,
+                        'group_slug' => $groupSlug,
+                        'exception' => $e->getMessage(),
+                    ]);
+
+                    try {
+                        $this->whatsAppService->sendMessage(
+                            $from,
+                            'An error occurred while loading items. Please try again later.'
+                        );
+                    } catch (\Exception $sendError) {
+                        Log::warning('Could not send error message to user', [
+                            'from' => $from,
+                            'error' => $sendError->getMessage(),
+                        ]);
+                    }
+                }
+            } else {
+                Log::warning('Unknown interactive list ID format', [
+                    'from' => $from,
+                    'selected_id' => $selectedId,
+                ]);
+            }
+        } elseif ($type === 'button_reply') {
+            // Handle button replies if needed in the future
+            Log::info('Button reply received', [
+                'from' => $from,
+                'button_data' => $interactive['button_reply'] ?? [],
+            ]);
+        } else {
+            Log::warning('Unknown interactive type', [
+                'from' => $from,
+                'type' => $type,
+            ]);
         }
     }
 }
