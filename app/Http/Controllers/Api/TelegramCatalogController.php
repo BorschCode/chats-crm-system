@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\CatalogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class TelegramCatalogController extends Controller
 {
@@ -68,7 +69,7 @@ class TelegramCatalogController extends Controller
             return response()->json([
                 'success' => false,
                 'error' => 'Item not found',
-            ], 404);
+            ], Response::HTTP_NOT_FOUND);
         }
 
         return response()->json([
