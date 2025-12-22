@@ -354,43 +354,48 @@ class WhatsAppService implements MessagingService
             return;
         }
 
-        // WhatsApp limit is 4096 characters, use 3800 to be safe
-        $maxLength = 3800;
-        $messages = [];
-        $currentMessage = "*Available Items{$groupName}:*\n\n";
+        // Interactive List Messages have a limit of 10 rows per section and 10 sections max
+        // We'll use one section with up to 10 items
+        $rows = [];
+        $count = 0;
 
         foreach ($items as $item) {
-            $itemText = "🛍️ *{$item->title}*\n";
-            $itemText .= "   Price: \${$item->price}\n";
-            $itemText .= "   View: item {$item->slug}\n\n";
-
-            // Check if adding this item would exceed the limit
-            if (strlen($currentMessage.$itemText) > $maxLength) {
-                $messages[] = $currentMessage;
-                $currentMessage = $itemText;
-            } else {
-                $currentMessage .= $itemText;
+            if ($count >= 10) {
+                break; // WhatsApp limit: max 10 rows per section
             }
+
+            $priceText = "\${$item->price}";
+            $rows[] = [
+                'id' => "item_{$item->slug}",
+                'title' => substr($item->title, 0, 24), // Max 24 characters
+                'description' => substr($priceText, 0, 72), // Max 72 characters
+            ];
+            $count++;
         }
 
-        // Add the last message
-        if (! empty($currentMessage)) {
-            $messages[] = $currentMessage;
-        }
+        $bodyText = $groupSlug
+            ? "Browse items in '{$groupSlug}' 🛍️\n\nTap an item to view details."
+            : "Browse all items 🛍️\n\nTap an item to view details.";
 
-        // Send all messages with page numbers if multiple pages
-        $totalPages = count($messages);
-        foreach ($messages as $index => $message) {
-            if ($totalPages > 1) {
-                $pageNumber = $index + 1;
-                $message .= "\n_Page {$pageNumber} of {$totalPages}_";
-            }
-            $this->sendMessage($to, $message);
+        $this->sendInteractiveList($to, [
+            'body' => $bodyText,
+            'button' => 'View Items',
+            'sections' => [
+                [
+                    'title' => 'Available Items',
+                    'rows' => $rows,
+                ],
+            ],
+        ]);
 
-            // Small delay between messages to avoid rate limiting
-            if ($index < $totalPages - 1) {
-                usleep(500000); // 0.5 second delay
+        // If there are more than 10 items, send remaining as text
+        if ($items->count() > 10) {
+            $remainingText = "\n*Additional Items:*\n";
+            foreach ($items->skip(10) as $item) {
+                $remainingText .= "🛍️ *{$item->title}* - \${$item->price}\n";
+                $remainingText .= "   View: item {$item->slug}\n\n";
             }
+            $this->sendMessage($to, $remainingText);
         }
     }
 

@@ -312,6 +312,44 @@ class WhatsAppWebhookController extends Controller
                         ]);
                     }
                 }
+            } elseif (str_starts_with($selectedId, 'item_')) {
+                // Handle item selections from interactive list
+                $itemSlug = substr($selectedId, 5); // Remove "item_" prefix
+                Log::info('User selected item from interactive list', [
+                    'from' => $from,
+                    'item_slug' => $itemSlug,
+                ]);
+
+                try {
+                    $item = $this->catalogService->getItem($itemSlug);
+
+                    if ($item) {
+                        $this->whatsAppService->sendItemDetails($from, $item);
+                    } else {
+                        $this->whatsAppService->sendMessage(
+                            $from,
+                            "Item '{$itemSlug}' not found."
+                        );
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error sending item details', [
+                        'from' => $from,
+                        'item_slug' => $itemSlug,
+                        'exception' => $e->getMessage(),
+                    ]);
+
+                    try {
+                        $this->whatsAppService->sendMessage(
+                            $from,
+                            'An error occurred while loading item details. Please try again later.'
+                        );
+                    } catch (\Exception $sendError) {
+                        Log::warning('Could not send error message to user', [
+                            'from' => $from,
+                            'error' => $sendError->getMessage(),
+                        ]);
+                    }
+                }
             } else {
                 Log::warning('Unknown interactive list ID format', [
                     'from' => $from,
