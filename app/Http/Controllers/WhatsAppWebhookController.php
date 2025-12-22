@@ -33,7 +33,7 @@ class WhatsAppWebhookController extends Controller
             $this->webhookService->handlePayload($request->all(), $this->messagingService);
 
             return response('', Response::HTTP_OK);
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             return response('', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }

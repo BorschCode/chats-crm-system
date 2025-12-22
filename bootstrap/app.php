@@ -14,6 +14,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // API routes automatically exclude CSRF and session middleware
+
+        // Register custom middleware aliases
+        $middleware->alias([
+            'telegram.webapp' => \App\Http\Middleware\ValidateTelegramWebApp::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

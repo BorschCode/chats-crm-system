@@ -6,6 +6,8 @@ use App\Services\CatalogService;
 use App\Services\TelegramService;
 use Illuminate\Support\Facades\Log;
 use SergiX44\Nutgram\Nutgram;
+use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
+use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
 
 class BotHandlers
 {
@@ -23,16 +25,30 @@ class BotHandlers
 
     public function registerHandlers(Nutgram $bot): void
     {
-        // Start command
+        // Start command - Launch Mini App
         $bot->onCommand('start', function (Nutgram $bot) {
-            $chatId = (string) $bot->chatId();
-            $this->telegramService->sendCatalog($chatId);
+            $bot->sendMessage(
+                text: "Welcome! 👋\n\nTap the button below to browse our catalog in an interactive app.",
+                reply_markup: InlineKeyboardMarkup::make()->addRow(
+                    InlineKeyboardButton::make(
+                        '🛍️ Open Catalog',
+                        web_app: ['url' => config('app.url').'/telegram/app']
+                    )
+                )
+            );
         });
 
-        // Catalog command
+        // Catalog command - Launch Mini App
         $bot->onCommand('catalog', function (Nutgram $bot) {
-            $chatId = (string) $bot->chatId();
-            $this->telegramService->sendCatalog($chatId);
+            $bot->sendMessage(
+                text: '🛍️ Opening catalog...',
+                reply_markup: InlineKeyboardMarkup::make()->addRow(
+                    InlineKeyboardButton::make(
+                        '🛍️ Open Catalog',
+                        web_app: ['url' => config('app.url').'/telegram/app']
+                    )
+                )
+            );
         });
 
         // Groups command
