@@ -72,16 +72,20 @@ class BotHandlers
             if ($item) {
                 $this->telegramService->sendItemDetails($chatId, $item);
             } else {
-                $this->telegramService->sendMessage($chatId, "Item '{$itemSlug}' not found.");
+                // Use bot directly to avoid Markdown parsing issues
+                $bot->sendMessage(
+                    text: 'Item not found. Use /start to browse the catalog.',
+                    chat_id: $chatId
+                );
             }
         });
 
-        // Fallback command handler
+        // Fallback handler for unrecognized messages
         $bot->fallback(function (Nutgram $bot) {
-            $chatId = (string) $bot->chatId();
-            $this->telegramService->sendMessage(
-                $chatId,
-                "Unknown command. Try:\n/catalog\n/groups\n/items\n/item {slug}"
+            // Send plain text without Markdown to avoid parsing errors
+            $bot->sendMessage(
+                text: "I didn't recognize that command.\n\nUse /start to browse the catalog.",
+                chat_id: $bot->chatId()
             );
         });
 
@@ -94,7 +98,7 @@ class BotHandlers
 
             try {
                 $bot->sendMessage(
-                    text: 'An error occurred while processing your request. Please try again later.',
+                    text: 'Sorry, something went wrong. Please try again or use /start to open the catalog.',
                     chat_id: $bot->chatId()
                 );
             } catch (\Exception $e) {

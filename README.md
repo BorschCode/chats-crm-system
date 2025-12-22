@@ -14,24 +14,73 @@ Powered by **Laravel 12**, **Livewire 3**, **Sail**, **MySQL**
 ---
 
 ## 🚀 Overview
-This project is a lightweight, fully Dockerized Laravel 12 application that provides:
 
-- A simple **read-only product catalog**
-- Access through a **modern Livewire 3 web interface**
-- Access through **Telegram Bot**, **WhatsApp Cloud API**, and **Instagram Messaging API**
-- A clean, modular messaging architecture derived from `chats-crm-system`
-- **No admin panel**, **no CRUD** — all content is generated via **Factories + Seeders**
+A modern, multi-channel product catalog system built with **Laravel 12** that delivers seamless shopping experiences across web and messaging platforms.
+
+### ✨ Key Highlights
+
+- 🌐 **Responsive Web Catalog** - Livewire 3 powered SPA
+- 📱 **Telegram Mini App** - Native web app inside Telegram with full authentication
+- 💬 **WhatsApp Interactive Lists** - Native UI components with pagination
+- 🎨 **No Admin Panel** - Content managed via code (Factories + Seeders)
+- 🐳 **Fully Dockerized** - Laravel Sail ready
+- 🔒 **Production-Ready Security** - HMAC validation, signature verification
+- 🚀 **Lightweight** - No Redis, queues, or Horizon overhead
 
 ### Perfect for:
-- Small catalogs
+- Small to medium catalogs
 - Micro-commerce shops
-- Telegram / WhatsApp / Instagram sales bots
+- Telegram / WhatsApp sales bots
 - MVPs & prototypes
 - Personal digital storefronts
+- Educational projects demonstrating modern Laravel patterns
 
 ---
 
-![Preview](./docs/index-list.png)
+## 🎯 Live Demo
+
+**Try it now!** Interact with the live Telegram bot:
+
+[![Telegram Bot](https://img.shields.io/badge/Try_Live_Demo-@cvbnmjkl__bot-blue?logo=telegram&style=for-the-badge)](https://t.me/cvbnmjkl_bot)
+
+👉 **[Open in Telegram](https://t.me/cvbnmjkl_bot)**
+
+---
+
+## 📸 Screenshots
+
+<table>
+  <tr>
+    <th>Platform</th>
+    <th>Screenshot</th>
+    <th>Description</th>
+  </tr>
+  <tr>
+    <td><strong>Web Interface</strong></td>
+    <td><img src="./docs/web/index-list.png" alt="Web Catalog" width="300"/></td>
+    <td>Modern Livewire-powered catalog with responsive design and real-time filtering</td>
+  </tr>
+  <tr>
+    <td><strong>Telegram Mini App</strong></td>
+    <td><img src="./docs/telegram/telegram-index.png" alt="Telegram Index" width="300"/></td>
+    <td>Native Telegram Mini App with tab navigation and product browsing</td>
+  </tr>
+  <tr>
+    <td><strong>Telegram Items View</strong></td>
+    <td><img src="./docs/telegram/items.png" alt="Telegram Items" width="300"/></td>
+    <td>Interactive product cards with pricing and instant viewing</td>
+  </tr>
+  <tr>
+    <td><strong>WhatsApp Catalog</strong></td>
+    <td><img src="./docs/whatsap/index.png" alt="WhatsApp Index" width="300"/></td>
+    <td>WhatsApp Cloud API integration with interactive lists and buttons</td>
+  </tr>
+  <tr>
+    <td><strong>WhatsApp Item Details</strong></td>
+    <td><img src="./docs/whatsap/item.png" alt="WhatsApp Item" width="300"/></td>
+    <td>Rich product details with images, pricing, and navigation options</td>
+  </tr>
+</table>
 
 ---
 
@@ -53,42 +102,56 @@ No Redis. No queues. No Horizon. No admin dashboard.
 
 ## 📦 Features
 
-### Catalog
-- Group listing  
-- Item listing  
-- Items by group  
-- Item detail view  
-- Simple, elegant Livewire UI  
+### 🌐 Web Catalog (Livewire 3)
+- ✅ Group listing with descriptions
+- ✅ Item listing with real-time filtering
+- ✅ Items filtered by group
+- ✅ Item detail view with images
+- ✅ Responsive TailwindCSS design
+- ✅ Simple, elegant UI with no admin overhead
 
-### Messaging Integrations
-- Telegram bot support (webhook)  
-- WhatsApp Cloud API support  
-- Instagram Messaging API support  
-- Unified `CatalogService` for all integrations  
+### 📱 Telegram Mini App
+- ✅ **Native Telegram Web App** - Full SPA running inside Telegram
+- ✅ Tab-based navigation (Groups/Items)
+- ✅ Card grid layout with product images
+- ✅ Modal item details
+- ✅ Automatic theme adaptation (light/dark mode)
+- ✅ HMAC-SHA256 authentication
+- ✅ Personalized greeting with user's name
+
+### 💬 WhatsApp Cloud API Integration
+- ✅ **Interactive List Messages** - Native WhatsApp UI components
+- ✅ Pagination (9 items + "Next Page" button)
+- ✅ Interactive buttons for navigation
+- ✅ Rich media support (images in item details)
+- ✅ Typing indicators & read receipts
+- ✅ Webhook signature verification
+- ✅ Command enum for type-safe routing
+
+### 🔧 Architecture
+- ✅ Unified `CatalogService` for all channels
+- ✅ Service layer pattern for messaging
+- ✅ Dedicated middleware for security
+- ✅ Factory + Seeder data generation
+- ✅ No admin panel - content managed via code
 
 Supported bot commands:
 
 #### Telegram
 ```
-
-/start
-/catalog
-/groups
-/items
-/items {group_slug}
-/item {item_slug}
-
+/start         - Opens the Telegram Mini App catalog
+/catalog       - Alternative way to open the Mini App
 ```
 
-#### WhatsApp / Instagram
+#### WhatsApp (Interactive Lists & Buttons)
+```
+catalog        - View main menu with interactive buttons
+groups         - Browse product categories with pagination
+items          - View all items or items by category
+item <slug>    - View detailed item information with image
 ```
 
-catalog
-groups
-items
-item <slug>
-
-```
+*Note: WhatsApp uses interactive message components instead of plain text commands for better UX*
 
 ---
 
@@ -148,124 +211,72 @@ npm run build
 
 ---
 
-## 📡 Webhooks Setup (ngrok)
+## 📡 Local Development with ngrok
 
-Webhook URLs when using Sail + ngrok:
+When testing webhooks locally with ngrok:
 
-```
-https://your-ngrok-url/api/telegram/webhook
-https://your-ngrok-url/api/whatsapp/webhook
-https://your-ngrok-url/api/instagram/webhook
+```bash
+ngrok http 80
 ```
 
-Register these in:
+Then use the ngrok HTTPS URL for webhook registration:
 
-* Telegram Botfather
-* WhatsApp Cloud API setup
-* Facebook App (Instagram)
+```
+https://your-ngrok-url.ngrok.io/api/webhook/telegram
+https://your-ngrok-url.ngrok.io/api/webhook/whatsapp
+https://your-ngrok-url.ngrok.io/api/webhook/instagram
+```
+
+Don't forget to update `APP_URL` in `.env` to match your ngrok URL!
 
 ---
 
-## 📱 Livewire Frontend
+## 📱 Available Routes
 
-Available pages:
+### Web Interface (Livewire)
+* `/` - Homepage with item list
+* `/groups` - All product groups
+* `/items` - All items
+* `/items/{group}` - Items filtered by group
+* `/item/{slug}` - Individual item details
 
-* `/groups`
-* `/items`
-* `/items/{group}`
-* `/item/{slug}`
+### Telegram Mini App
+* `/telegram/app` - Telegram Web App catalog interface
+* Accessible via Telegram bot's inline button
+
+### API Endpoints (for Mini App)
+* `/api/telegram/groups` - Get all groups (authenticated)
+* `/api/telegram/items` - Get all items (authenticated)
+* `/api/telegram/items/{groupSlug}` - Get items by group (authenticated)
+* `/api/telegram/item/{slug}` - Get item details (authenticated)
 
 ---
 
-# Chats Catalog System
+## 💬 Webhook Configuration
 
-This project extends the `BorschCode/chats-crm-system` boilerplate to create a lightweight **Catalog + Messaging** system using **Laravel 12**, **Livewire 3**, and **TailwindCSS**.
-
-It is designed to be a read-only product catalog accessible via a simple web interface and multiple messaging channels.
-
-## 🧱 Tech Stack
-
-*   **Framework:** Laravel 12
-*   **Frontend:** Livewire 3 + Vite + TailwindCSS
-*   **Backend:** PHP 8.3+
-*   **Database:** MySQL
-*   **Containerization:** Laravel Sail (Docker)
-
-## 🐳 Setup and Installation
-
-This application uses **Laravel Sail** for local development via Docker.
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/BorschCode/chats-crm-system chats-catalog-system
-cd chats-catalog-system
-```
-
-### 2. Environment Setup
-
-Copy the minimal environment file and generate an application key.
-
-```bash
-cp .env.example .env
-# Replace 'YOUR_APP_KEY_HERE' in .env with a generated key
-php artisan key:generate
-```
-
-### 3. Start Sail and Install Dependencies
-
-Start the Docker containers and install the PHP dependencies.
-
-```bash
-# Start the containers (this will build the images the first time)
-./vendor/bin/sail up -d
-
-# Install PHP dependencies
-./vendor/bin/sail composer install
-
-# Install Node dependencies and build assets
-./vendor/bin/sail npm install
-./vendor/bin/sail npm run dev
-```
-
-### 4. Database Migration and Seeding
-
-Run the migrations to create the `groups` and `items` tables, and seed the database with sample data.
-
-```bash
-./vendor/bin/sail artisan migrate --seed
-```
-
-### 5. Access the Application
-
-The web catalog will be available at:
-
-*   **Web Catalog:** `http://localhost` (or the port specified in your `.env` file)
-
-## 🛒 Catalog Features (Web Frontend)
-
-The catalog is built with Livewire 3 and provides a simple, read-only browsing experience.
-
-| Route | Livewire Component | Description |
+| Channel | Webhook URL (POST) | Method |
 | :--- | :--- | :--- |
-| `/` | `ItemList` | View all items (default homepage) |
-| `/groups` | `GroupList` | View all product groups |
-| `/items/{groupSlug}` | `ItemList` | View items filtered by a specific group |
-| `/item/{slug}` | `ItemShow` | View individual item details |
+| **Telegram** | `/api/webhook/telegram` | POST |
+| **WhatsApp** | `/api/webhook/whatsapp` | GET (verification), POST (messages) |
+| **Instagram** | `/api/webhook/instagram` | POST |
 
-## 💬 Communication Channels (Webhooks)
+### Setting up Webhooks
 
-The system includes placeholder webhook controllers and services for three messaging platforms. These services are integrated with the `CatalogService` to respond to user commands.
+**Telegram:**
+```bash
+php artisan nutgram:hook:set https://your-domain.com/api/webhook/telegram
+```
 
-| Channel | Webhook URL (POST) | Supported Commands |
-| :--- | :--- | :--- |
-| **Telegram** | `/api/webhook/telegram` | `/start`, `/catalog`, `/groups`, `/items`, `/items {group}`, `/item {slug}` |
-| **WhatsApp** | `/api/webhook/whatsapp` | `catalog`, `groups`, `items`, `item <slug>` |
-| **Instagram** | `/api/webhook/instagram` | `catalog`, `groups`, `items`, `item <slug>` |
+**WhatsApp:**
+- Configure in Meta Business Suite / WhatsApp Cloud API Dashboard
+- Webhook verification token is set in `.env` as `WHATSAPP_VERIFY_TOKEN`
+- Includes signature verification middleware for security
 
-***Note:** The messaging services only log the response to the Laravel log file. To make them functional, you would need to implement the actual API calls to the respective messenger platforms and configure the webhooks.*
+**Instagram:**
+- Configure in Facebook App Dashboard
+- Currently placeholder implementation
 
-
+---
 
 ## 📘 License
 
