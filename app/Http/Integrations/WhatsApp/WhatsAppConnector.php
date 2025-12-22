@@ -6,8 +6,8 @@ use App\Http\Integrations\WhatsApp\Exceptions\AccessTokenInvalidException;
 use App\Http\Integrations\WhatsApp\Exceptions\MessageTooLongException;
 use App\Http\Integrations\WhatsApp\Exceptions\RecipientNotAllowedException;
 use Saloon\Http\Connector;
+use Saloon\Http\PendingRequest;
 use Saloon\Http\Response;
-use Saloon\PendingRequest;
 
 class WhatsAppConnector extends Connector
 {
@@ -49,7 +49,7 @@ class WhatsAppConnector extends Connector
 
         match ($errorCode) {
             131030 => throw new RecipientNotAllowedException($errorMessage),
-            190 => throw new AccessTokenInvalidException(),
+            190 => throw new AccessTokenInvalidException,
             100 => str_contains($errorMessage, '4096')
                 ? throw new MessageTooLongException(4096)
                 : throw new \Exception($errorMessage, $errorCode),

@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Http\Controllers\InstagramWebhookController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\WhatsAppWebhookController;
+use App\Http\Integrations\WhatsApp\WhatsAppConnector;
 use App\Services\CatalogService;
 use App\Services\InstagramService;
 use App\Services\MessagingService;
@@ -28,7 +29,7 @@ class MessagingServiceProvider extends ServiceProvider
         $this->app->singleton(WhatsAppService::class, function ($app) {
             return new WhatsAppService(
                 $app->make(CatalogService::class),
-                config('services.whatsapp')
+                $app->make(WhatsAppConnector::class)
             );
         });
 

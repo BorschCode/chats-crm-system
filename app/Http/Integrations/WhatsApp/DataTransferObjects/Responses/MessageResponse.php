@@ -12,6 +12,9 @@ class MessageResponse
         public readonly array $messages
     ) {}
 
+    /**
+     * @throws \JsonException
+     */
     public static function fromResponse(Response $response): self
     {
         $data = $response->json();
