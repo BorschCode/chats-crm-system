@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Services\CatalogService;
 use App\Services\TelegramService;
+use App\Services\WhatsAppWebhookService;
 use App\Telegram\BotHandlers;
 use Illuminate\Support\ServiceProvider;
 use SergiX44\Nutgram\Nutgram;
@@ -33,6 +34,13 @@ class AppServiceProvider extends ServiceProvider
             return new BotHandlers(
                 $app->make(CatalogService::class),
                 $app->make(TelegramService::class)
+            );
+        });
+
+        // Register WhatsAppWebhookService as singleton
+        $this->app->singleton(WhatsAppWebhookService::class, function ($app) {
+            return new WhatsAppWebhookService(
+                config('services.whatsapp.webhook_verify_token')
             );
         });
     }

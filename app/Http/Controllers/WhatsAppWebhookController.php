@@ -5,21 +5,19 @@ namespace App\Http\Controllers;
 use App\Enums\WhatsAppCommand;
 use App\Services\CatalogService;
 use App\Services\WhatsAppService;
+use App\Services\WhatsAppWebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class WhatsAppWebhookController extends Controller
 {
-    protected WhatsAppService $whatsAppService;
-
-    protected CatalogService $catalogService;
-
-    public function __construct(WhatsAppService $whatsAppService, CatalogService $catalogService)
-    {
-        $this->whatsAppService = $whatsAppService;
-        $this->catalogService = $catalogService;
-    }
+    public function __construct(
+        protected WhatsAppService $whatsAppService,
+        protected CatalogService $catalogService,
+        protected WhatsAppWebhookService $webhookService
+    ) {}
 
     /**
      * Handle webhook verification (GET request from Meta)
@@ -29,39 +27,21 @@ class WhatsAppWebhookController extends Controller
         Log::info('WhatsApp webhook verification request received', [
             'method' => $request->method(),
             'url' => $request->fullUrl(),
-            'headers' => $request->headers->all(),
             'query_params' => $request->query(),
         ]);
 
         // Facebook sends: hub.mode, hub.challenge, hub.verify_token
         // PHP converts dots to underscores in query params
-        $mode = $request->query('hub_mode');
-        $token = $request->query('hub_verify_token');
-        $challenge = $request->query('hub_challenge');
+        $mode = $request->query('hub_mode', '');
+        $token = $request->query('hub_verify_token', '');
+        $challenge = $request->query('hub_challenge', '');
 
-        $verifyToken = config('services.whatsapp.webhook_verify_token');
+        $verifiedChallenge = $this->webhookService->verifyWebhook($mode, $token, $challenge);
 
-        Log::info('WhatsApp webhook verification details', [
-            'received_mode' => $mode,
-            'received_token' => $token,
-            'expected_token' => $verifyToken,
-            'challenge' => $challenge,
-            'tokens_match' => $token === $verifyToken,
-        ]);
-
-        if ($mode === 'subscribe' && $token === $verifyToken) {
-            Log::info('WEBHOOK VERIFIED');
-
-            // Return ONLY the challenge as plain text, exactly like Node.js version
-            return response($challenge, Response::HTTP_OK)
+        if ($verifiedChallenge !== null) {
+            return response($verifiedChallenge, Response::HTTP_OK)
                 ->header('Content-Type', 'text/plain');
         }
-
-        Log::warning('WhatsApp webhook verification failed', [
-            'mode' => $mode,
-            'received_token' => $token,
-            'expected_token' => $verifyToken,
-        ]);
 
         return response('', Response::HTTP_FORBIDDEN);
     }
@@ -376,7 +356,7 @@ class WhatsAppWebhookController extends Controller
                 }
             } elseif (str_starts_with($selectedId, 'next_groups_page_')) {
                 // Handle group pagination - format: next_groups_page_{pageNumber}
-                $pageNumber = (int) substr($selectedId, 17); // Remove "next_groups_page_" prefix
+                $pageNumber = (int) Str::after($selectedId, 'next_groups_page_');
 
                 Log::info('User requested next page of groups', [
                     'from' => $from,
@@ -438,7 +418,7 @@ class WhatsAppWebhookController extends Controller
                 }
             } elseif (str_starts_with($buttonId, 'back_to_list_')) {
                 // User clicked "Back to List" button - format: back_to_list_{groupSlug}
-                $groupSlug = substr($buttonId, 14); // Remove "back_to_list_" prefix
+                $groupSlug = Str::after($buttonId, 'back_to_list_');
 
                 Log::info('User navigating back to item list', [
                     'from' => $from,
