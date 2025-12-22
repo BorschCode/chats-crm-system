@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1354b02dd84a754ef9a5c00877cb6d05",
+    "content-hash": "cf06554873184129bbe66eb8bde95de4",
     "packages": [
         {
             "name": "brick/math",
@@ -2732,6 +2732,89 @@
                 "source": "https://github.com/nutgram/hydrator/tree/7.0.2"
             },
             "time": "2025-11-23T18:23:30+00:00"
+        },
+        {
+            "name": "nutgram/laravel",
+            "version": "1.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nutgram/laravel.git",
+                "reference": "58d8bc7e1a1422796f96d243de141f1859e71692"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nutgram/laravel/zipball/58d8bc7e1a1422796f96d243de141f1859e71692",
+                "reference": "58d8bc7e1a1422796f96d243de141f1859e71692",
+                "shasum": ""
+            },
+            "require": {
+                "nunomaduro/termwind": "^1.0|^2.0",
+                "nutgram/nutgram": "^4.39.2",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "illuminate/testing": "^9.0|^10.0|^11.0|^12.0",
+                "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0",
+                "pestphp/pest": "^1.1|^2.0|^3.0|^4.0",
+                "vimeo/psalm": "^6.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Nutgram\\Laravel\\NutgramServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/Support/Helpers.php"
+                ],
+                "psr-4": {
+                    "Nutgram\\Laravel\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Luca Patera",
+                    "email": "lucapatera@outlook.it",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Sergio Brighenti",
+                    "email": "sergio@brighenti.me",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Laravel package for Nutgram",
+            "homepage": "https://github.com/nutgram/nutgram-laravel",
+            "keywords": [
+                "api",
+                "bot",
+                "framework",
+                "laravel",
+                "library",
+                "nutgram",
+                "telegram"
+            ],
+            "support": {
+                "source": "https://github.com/nutgram/laravel/tree/1.6.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/Lukasss93",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/SergiX44",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-11-29T19:21:26+00:00"
         },
         {
             "name": "nutgram/nutgram",

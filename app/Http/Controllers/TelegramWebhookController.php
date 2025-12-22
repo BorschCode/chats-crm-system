@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use SergiX44\Nutgram\Nutgram;
+use Symfony\Component\HttpFoundation\Response;
 
 class TelegramWebhookController extends Controller
 {
@@ -23,13 +24,13 @@ class TelegramWebhookController extends Controller
             $this->bot->run();
 
             return response()->json(['status' => 'ok']);
-        } catch (\Exception $e) {
-            Log::error('Telegram webhook error: '.$e->getMessage(), [
-                'exception' => $e,
+        } catch (\Exception $exception) {
+            Log::error('Telegram webhook error: '.$exception->getMessage(), [
+                'exception' => $exception,
                 'payload' => $request->all(),
             ]);
 
-            return response()->json(['status' => 'error'], 500);
+            return response()->json(['status' => 'error'], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 }

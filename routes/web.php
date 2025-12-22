@@ -24,3 +24,8 @@ Route::get('/items', ItemList::class)->name('items.list');
 Route::get('/items/{groupSlug}', ItemList::class)->name('items.by.group');
 Route::get('/item/{slug}', ItemShow::class)->name('item.show');
 Route::get('/about', About::class)->name('about');
+
+// Telegram Mini App
+Route::get('/telegram/app', function () {
+    return view('telegram.app');
+})->name('telegram.app');

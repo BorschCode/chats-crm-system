@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\TelegramCatalogController;
 use App\Http\Controllers\InstagramWebhookController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\WhatsAppWebhookController;
@@ -29,3 +30,11 @@ Route::post('/webhook/whatsapp', [WhatsAppWebhookController::class, 'handle'])
     ->middleware(VerifyWhatsAppSignature::class);
 
 Route::post('/webhook/instagram', [InstagramWebhookController::class, 'handle']);
+
+// Telegram Mini App API routes (with WebApp validation)
+Route::prefix('telegram')->middleware('telegram.webapp')->group(function () {
+    Route::get('/groups', [TelegramCatalogController::class, 'groups']);
+    Route::get('/items', [TelegramCatalogController::class, 'items']);
+    Route::get('/items/{groupSlug}', [TelegramCatalogController::class, 'items']);
+    Route::get('/item/{slug}', [TelegramCatalogController::class, 'item']);
+});
