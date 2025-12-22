@@ -2,10 +2,10 @@
 
 use App\Http\Controllers\Api\TelegramCatalogController;
 use App\Http\Controllers\InstagramWebhookController;
-use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Controllers\WhatsAppWebhookController;
 use App\Http\Middleware\VerifyWhatsAppSignature;
 use Illuminate\Support\Facades\Route;
+use SergiX44\Nutgram\Nutgram;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,7 +19,21 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Webhook routes for messaging channels
-Route::post('/webhook/telegram', [TelegramWebhookController::class, 'handle']);
+// Telegram webhook - Nutgram auto-handles webhook vs polling detection
+Route::post('/webhook/telegram', function (Nutgram $bot) {
+    try {
+        $bot->run();
+
+        return response()->json(['ok' => true]);
+    } catch (\Throwable $e) {
+        \Illuminate\Support\Facades\Log::error('Telegram webhook error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json(['ok' => false, 'error' => $e->getMessage()], 200);
+    }
+});
 
 // WhatsApp webhook (GET for verification, POST for messages)
 // GET request doesn't need signature verification (used for webhook setup)
