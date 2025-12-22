@@ -14,7 +14,9 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "livewire/volt": "^1.7.0",
-        "nutgram/laravel": "^1.6"
+        "nutgram/laravel": "^1.6",
+        "saloonphp/laravel-plugin": "^3.0",
+        "saloonphp/saloon": "^3.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",

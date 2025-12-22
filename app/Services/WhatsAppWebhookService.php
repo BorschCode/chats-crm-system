@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Enums\WhatsAppCommand;
+use App\Http\Integrations\WhatsApp\DataTransferObjects\Webhooks\InteractivePayload;
+use App\Http\Integrations\WhatsApp\DataTransferObjects\Webhooks\WebhookMessage;
+use App\Http\Integrations\WhatsApp\DataTransferObjects\Webhooks\WebhookPayload;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -33,35 +36,29 @@ class WhatsAppWebhookService
     {
         Log::info('Incoming WhatsApp payload', ['payload' => $payload]);
 
-        $entries = $payload['entry'] ?? [];
-        foreach ($entries as $entry) {
-            $changes = $entry['changes'] ?? [];
-            foreach ($changes as $change) {
-                $messages = $change['value']['messages'] ?? [];
-                foreach ($messages as $message) {
-                    $this->processMessage($message, $messaging);
-                }
-            }
+        $webhookPayload = WebhookPayload::fromArray($payload);
+
+        foreach ($webhookPayload->getMessages() as $message) {
+            $this->processMessage($message, $messaging);
         }
     }
 
-    protected function processMessage(array $message, MessagingService $messaging): void
+    protected function processMessage(WebhookMessage $message, MessagingService $messaging): void
     {
-        $from = $message['from'];
-        $type = $message['type'];
-        $messageId = $message['id'];
-
-        Log::info("Processing message {$messageId}", ['from' => $from, 'type' => $type]);
+        Log::info("Processing message {$message->id}", [
+            'from' => $message->from,
+            'type' => $message->type,
+        ]);
 
         // Позначаємо як прочитане та вмикаємо індикатор друку
         if (method_exists($messaging, 'markReadAndSendTypingIndicator')) {
-            $messaging->markReadAndSendTypingIndicator($messageId);
+            $messaging->markReadAndSendTypingIndicator($message->id);
         }
 
-        match ($type) {
-            'interactive' => $this->handleInteractive($from, $message['interactive'], $messaging),
-            'text' => $this->handleText($from, $message['text']['body'], $messaging),
-            default => Log::info("Unhandled message type: {$type}")
+        match ($message->type) {
+            'interactive' => $this->handleInteractive($message->from, $message->interactive, $messaging),
+            'text' => $this->handleText($message->from, $message->text->body, $messaging),
+            default => Log::info("Unhandled message type: {$message->type}")
         };
     }
 
@@ -89,12 +86,16 @@ class WhatsAppWebhookService
         }
     }
 
-    protected function handleInteractive(string $from, array $interactive, MessagingService $messaging): void
+    protected function handleInteractive(string $from, InteractivePayload $interactive, MessagingService $messaging): void
     {
-        $type = $interactive['type'];
-        $selectedId = $interactive[$type]['id'] ?? ($interactive[$type]['id'] ?? null);
+        $selectedId = $interactive->getSelectedId();
 
-        Log::info('Interactive response', ['from' => $from, 'type' => $type, 'id' => $selectedId]);
+        Log::info('Interactive response', [
+            'from' => $from,
+            'type' => $interactive->type,
+            'id' => $selectedId,
+            'title' => $interactive->getSelectedTitle(),
+        ]);
 
         if (! $selectedId) {
             return;
