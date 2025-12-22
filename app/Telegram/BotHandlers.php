@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Log;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
+use SergiX44\Nutgram\Telegram\Types\WebApp\WebAppInfo;
 
 class BotHandlers
 {
@@ -32,7 +33,7 @@ class BotHandlers
                 reply_markup: InlineKeyboardMarkup::make()->addRow(
                     InlineKeyboardButton::make(
                         '🛍️ Open Catalog',
-                        web_app: ['url' => config('app.url').'/telegram/app']
+                        web_app: WebAppInfo::make(url: config('app.url').'/telegram/app')
                     )
                 )
             );
@@ -45,7 +46,7 @@ class BotHandlers
                 reply_markup: InlineKeyboardMarkup::make()->addRow(
                     InlineKeyboardButton::make(
                         '🛍️ Open Catalog',
-                        web_app: ['url' => config('app.url').'/telegram/app']
+                        web_app: WebAppInfo::make(url: config('app.url').'/telegram/app')
                     )
                 )
             );
