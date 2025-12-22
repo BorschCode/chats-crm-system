@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\WhatsAppCommand;
 use App\Services\CatalogService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
@@ -116,11 +117,10 @@ class WhatsAppWebhookController extends Controller
     {
         $from = $message['from'];
         $messageId = $message['id'];
-        $timestamp = $message['timestamp'];
         $messageType = $message['type'];
 
         // Mark message as read
-        $this->whatsAppService->markAsRead($messageId);
+        $this->whatsAppService->markReadAndSendTypingIndicator($messageId);
 
         // Handle interactive list responses
         if ($messageType === 'interactive') {
@@ -139,54 +139,29 @@ class WhatsAppWebhookController extends Controller
         $text = strtolower(trim($message['text']['body']));
 
         Log::info('Processing WhatsApp message', [
-            'from' => $from,
             'message_id' => $messageId,
             'text' => $text,
+            'message' => $message,
         ]);
 
-        // Show typing indicator while processing
-        $this->whatsAppService->sendTypingIndicator($from);
+        // Show typing indicator while processing (also marks message as read)
+        $this->whatsAppService->markReadAndSendTypingIndicator($messageId);
 
         // Parse command
         $parts = explode(' ', $text, 2);
-        $command = $parts[0];
+        $commandText = $parts[0];
         $argument = $parts[1] ?? null;
 
+        $command = WhatsAppCommand::fromText($commandText);
+
         try {
-            switch ($command) {
-                case 'catalog':
-                    $this->whatsAppService->sendCatalog($from);
-                    break;
-
-                case 'groups':
-                    $this->whatsAppService->sendGroups($from);
-                    break;
-
-                case 'items':
-                    $groupSlug = $argument;
-                    $this->whatsAppService->sendItems($from, $groupSlug);
-                    break;
-
-                case 'item':
-                    if (! $argument) {
-                        $this->whatsAppService->sendMessage($from, 'Please provide an item slug. Example: item product-name');
-                        break;
-                    }
-
-                    $itemSlug = $argument;
-                    $item = $this->catalogService->getItem($itemSlug);
-
-                    if ($item) {
-                        $this->whatsAppService->sendItemDetails($from, $item);
-                    } else {
-                        $this->whatsAppService->sendMessage($from, "Item '{$itemSlug}' not found.");
-                    }
-                    break;
-
-                default:
-                    $this->whatsAppService->sendWelcomeMenu($from);
-                    break;
-            }
+            match ($command) {
+                WhatsAppCommand::Catalog => $this->whatsAppService->sendCatalog($from),
+                WhatsAppCommand::Groups => $this->whatsAppService->sendGroups($from),
+                WhatsAppCommand::Items => $this->whatsAppService->sendItems($from, $argument),
+                WhatsAppCommand::Item => $this->handleItemCommand($from, $argument),
+                default => $this->whatsAppService->sendWelcomeMenu($from),
+            };
         } catch (\Exception $e) {
             Log::error('Error processing WhatsApp command', [
                 'from' => $from,
@@ -210,19 +185,35 @@ class WhatsAppWebhookController extends Controller
         }
     }
 
+    protected function handleItemCommand(string $from, ?string $argument): void
+    {
+        if (! $argument) {
+            $this->whatsAppService->sendMessage($from, 'Please provide an item slug. Example: item product-name');
+
+            return;
+        }
+
+        $item = $this->catalogService->getItem($argument);
+
+        if ($item) {
+            $this->whatsAppService->sendItemDetails($from, $item);
+        } else {
+            $this->whatsAppService->sendMessage($from, "Item '{$argument}' not found.");
+        }
+    }
+
     protected function processInteractiveMessage(array $message, string $from): void
     {
+        $messageId = $message['id'];
         $interactive = $message['interactive'] ?? [];
         $type = $interactive['type'] ?? null;
 
         Log::info('Processing WhatsApp interactive message', [
-            'from' => $from,
-            'interactive_type' => $type,
-            'data' => $interactive,
+            'message data' => $message,
         ]);
 
-        // Show typing indicator while processing
-        $this->whatsAppService->sendTypingIndicator($from);
+        // Show typing indicator while processing (also marks message as read)
+        $this->whatsAppService->markReadAndSendTypingIndicator($messageId);
 
         // Handle list reply
         if ($type === 'list_reply') {
@@ -235,39 +226,28 @@ class WhatsAppWebhookController extends Controller
             }
 
             // Parse the selected ID (format: "menu_{action}" or "group_{slug}")
-            if (str_starts_with($selectedId, 'menu_')) {
+            if (str_starts_with($selectedId, 'menu_') || $selectedId === 'back_to_menu') {
                 // Handle welcome menu selections
-                $menuAction = substr($selectedId, 5); // Remove "menu_" prefix
-                Log::info('User selected from welcome menu', [
+                $command = WhatsAppCommand::fromMenuId($selectedId);
+
+                Log::info('User selected from menu', [
                     'from' => $from,
-                    'menu_action' => $menuAction,
+                    'selected_id' => $selectedId,
+                    'command' => $command?->value,
                 ]);
 
                 try {
-                    switch ($menuAction) {
-                        case 'catalog':
-                            $this->whatsAppService->sendCatalog($from);
-                            break;
-
-                        case 'groups':
-                            $this->whatsAppService->sendGroups($from);
-                            break;
-
-                        case 'items':
-                            $this->whatsAppService->sendItems($from);
-                            break;
-
-                        default:
-                            Log::warning('Unknown menu action', [
-                                'from' => $from,
-                                'menu_action' => $menuAction,
-                            ]);
-                            $this->whatsAppService->sendWelcomeMenu($from);
-                    }
+                    match ($command) {
+                        WhatsAppCommand::Catalog => $this->whatsAppService->sendCatalog($from),
+                        WhatsAppCommand::Groups => $this->whatsAppService->sendGroups($from),
+                        WhatsAppCommand::Items => $this->whatsAppService->sendItems($from),
+                        WhatsAppCommand::BackToMenu => $this->whatsAppService->sendWelcomeMenu($from),
+                        default => $this->whatsAppService->sendWelcomeMenu($from),
+                    };
                 } catch (\Exception $e) {
                     Log::error('Error processing menu selection', [
                         'from' => $from,
-                        'menu_action' => $menuAction,
+                        'selected_id' => $selectedId,
                         'exception' => $e->getMessage(),
                     ]);
 
@@ -394,6 +374,36 @@ class WhatsAppWebhookController extends Controller
                         'selected_id' => $selectedId,
                     ]);
                 }
+            } elseif (str_starts_with($selectedId, 'next_groups_page_')) {
+                // Handle group pagination - format: next_groups_page_{pageNumber}
+                $pageNumber = (int) substr($selectedId, 17); // Remove "next_groups_page_" prefix
+
+                Log::info('User requested next page of groups', [
+                    'from' => $from,
+                    'page' => $pageNumber,
+                ]);
+
+                try {
+                    $this->whatsAppService->sendGroups($from, $pageNumber);
+                } catch (\Exception $e) {
+                    Log::error('Error sending next page of groups', [
+                        'from' => $from,
+                        'page' => $pageNumber,
+                        'exception' => $e->getMessage(),
+                    ]);
+
+                    try {
+                        $this->whatsAppService->sendMessage(
+                            $from,
+                            'An error occurred while loading more groups. Please try again later.'
+                        );
+                    } catch (\Exception $sendError) {
+                        Log::warning('Could not send error message to user', [
+                            'from' => $from,
+                            'error' => $sendError->getMessage(),
+                        ]);
+                    }
+                }
             } else {
                 Log::warning('Unknown interactive list ID format', [
                     'from' => $from,
@@ -416,7 +426,7 @@ class WhatsAppWebhookController extends Controller
             ]);
 
             // Handle navigation buttons
-            if ($buttonId === 'back_to_menu') {
+            if ($buttonId === WhatsAppCommand::BackToMenu->value) {
                 // User clicked "Main Menu" button
                 try {
                     $this->whatsAppService->sendWelcomeMenu($from);
