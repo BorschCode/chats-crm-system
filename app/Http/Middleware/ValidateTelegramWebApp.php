@@ -26,13 +26,13 @@ class ValidateTelegramWebApp
         if (! $initData) {
             Log::warning('Missing Telegram init data');
 
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
 
         if (! $this->validateTelegramData($initData)) {
             Log::warning('Invalid Telegram init data');
 
-            return response()->json(['error' => 'Invalid authentication'], 401);
+            return response()->json(['error' => 'Invalid authentication'], Response::HTTP_UNAUTHORIZED);
         }
 
         // Parse and attach user data to request
