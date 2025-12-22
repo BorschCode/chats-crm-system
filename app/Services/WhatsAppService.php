@@ -2,96 +2,57 @@
 
 namespace App\Services;
 
+use App\Http\Integrations\WhatsApp\DataTransferObjects\Responses\MessageResponse;
+use App\Http\Integrations\WhatsApp\Exceptions\AccessTokenInvalidException;
+use App\Http\Integrations\WhatsApp\Exceptions\MessageTooLongException;
+use App\Http\Integrations\WhatsApp\Exceptions\RecipientNotAllowedException;
+use App\Http\Integrations\WhatsApp\Requests\MarkMessageAsReadRequest;
+use App\Http\Integrations\WhatsApp\Requests\SendImageMessageRequest;
+use App\Http\Integrations\WhatsApp\Requests\SendInteractiveButtonsRequest;
+use App\Http\Integrations\WhatsApp\Requests\SendInteractiveListRequest;
+use App\Http\Integrations\WhatsApp\Requests\SendTextMessageRequest;
+use App\Http\Integrations\WhatsApp\WhatsAppConnector;
 use App\Models\Item;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Log;
+use Saloon\Exceptions\Request\RequestException;
 
 class WhatsAppService implements MessagingService
 {
     protected CatalogService $catalogService;
 
-    protected Client $client;
-
-    protected string $phoneNumberId;
-
-    protected string $accessToken;
-
-    protected string $apiVersion;
-
-    protected string $apiBaseUrl;
+    protected WhatsAppConnector $connector;
 
     public function __construct(
         CatalogService $catalogService,
-        array $config
+        WhatsAppConnector $connector
     ) {
         $this->catalogService = $catalogService;
-        $this->phoneNumberId = $config['phone_number_id'];
-        $this->accessToken = $config['access_token'];
-        $this->apiVersion = $config['api_version'];
-        $this->apiBaseUrl = $config['api_base_url'];
-
-        $this->client = new Client([
-            'base_uri' => "{$this->apiBaseUrl}/{$this->apiVersion}/",
-            'headers' => [
-                'Authorization' => "Bearer {$this->accessToken}",
-                'Content-Type' => 'application/json',
-            ],
-        ]);
+        $this->connector = $connector;
     }
 
     /** @deprecated use markReadAndSendTypingIndicator */
     public function markAsRead(string $messageId): void
     {
-        try {
-            $response = $this->client->post("{$this->phoneNumberId}/messages", [
-                'json' => [
-                    'messaging_product' => 'whatsapp',
-                    'status' => 'read',
-                    'message_id' => $messageId,
-                ],
-            ]);
-
-            $body = json_decode($response->getBody()->getContents(), true);
-
-            Log::info('WhatsApp typing indicator sent (message marked as read)', [
-                'message_id' => $messageId,
-                'response' => $body,  // This will log the actual JSON response
-            ]);
-        } catch (GuzzleException $e) {
-            Log::warning('WhatsApp markAsRead error: '.$e->getMessage(), [
-                'message_id' => $messageId,
-                'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,
-            ]);
-            // Don't throw - this is not critical
-        }
+        $this->markReadAndSendTypingIndicator($messageId);
     }
 
     public function markReadAndSendTypingIndicator(string $messageId): void
     {
         try {
-            $response = $this->client->post("{$this->phoneNumberId}/messages", [
-                'json' => [
-                    'messaging_product' => 'whatsapp',
-                    'status' => 'read',
-                    'message_id' => $messageId,
-                    'typing_indicator' => [
-                        'type' => 'text',
-                    ],
-                ],
-            ]);
+            $request = new MarkMessageAsReadRequest(
+                phoneNumberId: $this->connector->phoneNumberId,
+                messageId: $messageId
+            );
 
-            $body = json_decode($response->getBody()->getContents(), true);
+            $response = $this->connector->send($request);
 
             Log::info('WhatsApp typing indicator sent (message marked as read)', [
                 'message_id' => $messageId,
-                'response' => $body,  // This will log the actual JSON response
+                'response' => $response->json(),
             ]);
-
-        } catch (GuzzleException $exception) {
+        } catch (\Exception $exception) {
             Log::warning('WhatsApp typing indicator error: '.$exception->getMessage(), [
                 'message_id' => $messageId,
-                'response' => $exception->hasResponse() ? $exception->getResponse()->getBody()->getContents() : null,
             ]);
             // Don't throw - typing indicators are not critical
         }
@@ -100,62 +61,33 @@ class WhatsAppService implements MessagingService
     public function sendInteractiveList(string $to, array $listData): void
     {
         try {
-            $payload = [
-                'messaging_product' => 'whatsapp',
-                'recipient_type' => 'individual',
-                'to' => $to,
-                'type' => 'interactive',
-                'interactive' => [
-                    'type' => 'list',
-                    'body' => [
-                        'text' => $listData['body'],
-                    ],
-                    'action' => [
-                        'button' => $listData['button'],
-                        'sections' => $listData['sections'],
-                    ],
-                ],
-            ];
+            $request = new SendInteractiveListRequest(
+                phoneNumberId: $this->connector->phoneNumberId,
+                to: $to,
+                listData: $listData
+            );
 
-            // Add optional header if provided
-            if (isset($listData['header'])) {
-                $payload['interactive']['header'] = [
-                    'type' => 'text',
-                    'text' => $listData['header'],
-                ];
-            }
+            $response = $this->connector->send($request);
+            $messageResponse = MessageResponse::fromResponse($response);
 
-            // Add optional footer if provided
-            if (isset($listData['footer'])) {
-                $payload['interactive']['footer'] = [
-                    'text' => $listData['footer'],
-                ];
-            }
-
-            $response = $this->client->post("{$this->phoneNumberId}/messages", [
-                'json' => $payload,
-            ]);
-
-            $body = json_decode($response->getBody()->getContents(), true);
             Log::info('WhatsApp interactive list sent successfully', [
                 'to' => $to,
-                'message_id' => $body['messages'][0]['id'] ?? null,
+                'message_id' => $messageResponse->getMessageId(),
             ]);
-        } catch (GuzzleException $e) {
-            $errorDetails = [
+        } catch (RecipientNotAllowedException $e) {
+            Log::warning($e->getMessage(), ['to' => $to]);
+            throw $e;
+        } catch (AccessTokenInvalidException $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        } catch (MessageTooLongException $e) {
+            Log::error($e->getMessage(), ['to' => $to]);
+            throw $e;
+        } catch (RequestException $e) {
+            Log::error('WhatsApp sendInteractiveList error: '.$e->getMessage(), [
                 'to' => $to,
                 'list_data' => $listData,
-            ];
-
-            if ($e->hasResponse()) {
-                $responseBody = $e->getResponse()->getBody()->getContents();
-                $errorDetails['response'] = $responseBody;
-
-                Log::error('WhatsApp sendInteractiveList error: '.$e->getMessage(), $errorDetails);
-            } else {
-                Log::error('WhatsApp sendInteractiveList error: '.$e->getMessage(), $errorDetails);
-            }
-
+            ]);
             throw $e;
         }
     }
@@ -163,132 +95,79 @@ class WhatsAppService implements MessagingService
     public function sendInteractiveButtons(string $to, array $buttonData): void
     {
         try {
-            $payload = [
-                'messaging_product' => 'whatsapp',
-                'recipient_type' => 'individual',
-                'to' => $to,
-                'type' => 'interactive',
-                'interactive' => [
-                    'type' => 'button',
-                    'body' => [
-                        'text' => $buttonData['body'],
-                    ],
-                    'action' => [
-                        'buttons' => $buttonData['buttons'],
-                    ],
-                ],
-            ];
+            $request = new SendInteractiveButtonsRequest(
+                phoneNumberId: $this->connector->phoneNumberId,
+                to: $to,
+                buttonData: $buttonData
+            );
 
-            // Add optional header if provided
-            if (isset($buttonData['header'])) {
-                $payload['interactive']['header'] = [
-                    'type' => 'text',
-                    'text' => $buttonData['header'],
-                ];
-            }
+            $response = $this->connector->send($request);
+            $messageResponse = MessageResponse::fromResponse($response);
 
-            // Add optional footer if provided
-            if (isset($buttonData['footer'])) {
-                $payload['interactive']['footer'] = [
-                    'text' => $buttonData['footer'],
-                ];
-            }
-
-            $response = $this->client->post("{$this->phoneNumberId}/messages", [
-                'json' => $payload,
-            ]);
-
-            $body = json_decode($response->getBody()->getContents(), true);
             Log::info('WhatsApp interactive buttons sent successfully', [
                 'to' => $to,
-                'message_id' => $body['messages'][0]['id'] ?? null,
+                'message_id' => $messageResponse->getMessageId(),
             ]);
-        } catch (GuzzleException $exception) {
-            $errorDetails = [
+        } catch (RecipientNotAllowedException $e) {
+            Log::warning($e->getMessage(), ['to' => $to]);
+            throw $e;
+        } catch (AccessTokenInvalidException $e) {
+            Log::error($e->getMessage());
+            throw $e;
+        } catch (MessageTooLongException $e) {
+            Log::error($e->getMessage(), ['to' => $to]);
+            throw $e;
+        } catch (RequestException $e) {
+            Log::error('WhatsApp sendInteractiveButtons error: '.$e->getMessage(), [
                 'to' => $to,
                 'button_data' => $buttonData,
-            ];
-
-            if ($exception->hasResponse()) {
-                $responseBody = $exception->getResponse()->getBody()->getContents();
-                $errorDetails['response'] = $responseBody;
-
-                Log::error('WhatsApp sendInteractiveButtons error: '.$exception->getMessage(), $errorDetails);
-            } else {
-                Log::error('WhatsApp sendInteractiveButtons error: '.$exception->getMessage(), $errorDetails);
-            }
-
-            throw $exception;
+            ]);
+            throw $e;
         }
     }
 
     public function sendMessage(string $to, string $text): void
     {
         try {
-            $response = $this->client->post("{$this->phoneNumberId}/messages", [
-                'json' => [
-                    'messaging_product' => 'whatsapp',
-                    'recipient_type' => 'individual',
-                    'to' => $to,
-                    'type' => 'text',
-                    'text' => [
-                        'preview_url' => false,
-                        'body' => $text,
-                    ],
-                ],
-            ]);
+            $request = new SendTextMessageRequest(
+                phoneNumberId: $this->connector->phoneNumberId,
+                to: $to,
+                text: $text
+            );
 
-            $body = json_decode($response->getBody()->getContents(), true);
+            $response = $this->connector->send($request);
+            $messageResponse = MessageResponse::fromResponse($response);
+
             Log::info('WhatsApp message sent successfully', [
                 'to' => $to,
-                'message_id' => $body['messages'][0]['id'] ?? null,
+                'message_id' => $messageResponse->getMessageId(),
             ]);
-        } catch (GuzzleException $e) {
-            $errorDetails = [
+        } catch (RecipientNotAllowedException $e) {
+            Log::warning('WhatsApp: Recipient not in allowed list (test mode restriction)', [
+                'to' => $to,
+                'error_code' => $e->getCode(),
+                'hint' => 'Add this number to your WhatsApp Business API allowed list in Meta Developer Console',
+                'docs' => 'https://developers.facebook.com/docs/whatsapp/cloud-api/get-started#send-messages',
+            ]);
+            throw $e;
+        } catch (AccessTokenInvalidException $e) {
+            Log::error('WhatsApp: Access token expired or invalid', [
+                'error_code' => $e->getCode(),
+                'hint' => 'Generate a new access token in Meta Developer Console',
+            ]);
+            throw $e;
+        } catch (MessageTooLongException $e) {
+            Log::error('WhatsApp: Message too long (exceeds 4096 character limit)', [
+                'error_code' => $e->getCode(),
+                'message_length' => strlen($text),
+                'hint' => 'Message should be split into multiple messages with pagination',
+            ]);
+            throw $e;
+        } catch (RequestException $e) {
+            Log::error('WhatsApp sendMessage error: '.$e->getMessage(), [
                 'to' => $to,
                 'text' => $text,
-            ];
-
-            if ($e->hasResponse()) {
-                $responseBody = $e->getResponse()->getBody()->getContents();
-                $errorDetails['response'] = $responseBody;
-
-                // Parse Meta API error
-                $errorData = json_decode($responseBody, true);
-                if (isset($errorData['error']['code'])) {
-                    $errorCode = $errorData['error']['code'];
-                    $errorMessage = $errorData['error']['message'] ?? 'Unknown error';
-
-                    // Special handling for common errors
-                    if ($errorCode === 131030) {
-                        Log::warning('WhatsApp: Recipient not in allowed list (test mode restriction)', [
-                            'to' => $to,
-                            'error_code' => $errorCode,
-                            'hint' => 'Add this number to your WhatsApp Business API allowed list in Meta Developer Console',
-                            'docs' => 'https://developers.facebook.com/docs/whatsapp/cloud-api/get-started#send-messages',
-                        ]);
-                    } elseif ($errorCode === 190) {
-                        Log::error('WhatsApp: Access token expired or invalid', [
-                            'error_code' => $errorCode,
-                            'hint' => 'Generate a new access token in Meta Developer Console',
-                        ]);
-                    } elseif ($errorCode === 100 && str_contains($errorMessage, '4096')) {
-                        Log::error('WhatsApp: Message too long (exceeds 4096 character limit)', [
-                            'error_code' => $errorCode,
-                            'message_length' => strlen($text),
-                            'hint' => 'Message should be split into multiple messages with pagination',
-                        ]);
-                    } else {
-                        Log::error('WhatsApp API error: '.$errorMessage, [
-                            'error_code' => $errorCode,
-                            'to' => $to,
-                        ]);
-                    }
-                }
-            } else {
-                Log::error('WhatsApp sendMessage error: '.$e->getMessage(), $errorDetails);
-            }
-
+            ]);
             throw $e;
         }
     }
@@ -572,29 +451,24 @@ class WhatsAppService implements MessagingService
         $caption .= "*Description:*\n{$item->description}";
 
         try {
-            $response = $this->client->post("{$this->phoneNumberId}/messages", [
-                'json' => [
-                    'messaging_product' => 'whatsapp',
-                    'recipient_type' => 'individual',
-                    'to' => $to,
-                    'type' => 'image',
-                    'image' => [
-                        'link' => $item->image,
-                        'caption' => $caption,
-                    ],
-                ],
-            ]);
+            $request = new SendImageMessageRequest(
+                phoneNumberId: $this->connector->phoneNumberId,
+                to: $to,
+                imageUrl: $item->image,
+                caption: $caption
+            );
 
-            $body = json_decode($response->getBody()->getContents(), true);
+            $response = $this->connector->send($request);
+            $messageResponse = MessageResponse::fromResponse($response);
+
             Log::info('WhatsApp image sent successfully', [
                 'to' => $to,
-                'message_id' => $body['messages'][0]['id'] ?? null,
+                'message_id' => $messageResponse->getMessageId(),
             ]);
-        } catch (GuzzleException $e) {
+        } catch (\Exception $e) {
             Log::error('WhatsApp sendImageWithCaption error: '.$e->getMessage(), [
                 'to' => $to,
                 'item_id' => $item->id,
-                'response' => $e->hasResponse() ? $e->getResponse()->getBody()->getContents() : null,
             ]);
 
             // Fallback to text message
