@@ -41,6 +41,7 @@ class WhatsAppService implements MessagingService
         ]);
     }
 
+    /** @deprecated use markReadAndSendTypingIndicator */
     public function markAsRead(string $messageId): void
     {
         try {
@@ -52,8 +53,11 @@ class WhatsAppService implements MessagingService
                 ],
             ]);
 
-            Log::info('WhatsApp message marked as read', [
+            $body = json_decode($response->getBody()->getContents(), true);
+
+            Log::info('WhatsApp typing indicator sent (message marked as read)', [
                 'message_id' => $messageId,
+                'response' => $body,  // This will log the actual JSON response
             ]);
         } catch (GuzzleException $e) {
             Log::warning('WhatsApp markAsRead error: '.$e->getMessage(), [
@@ -64,20 +68,34 @@ class WhatsAppService implements MessagingService
         }
     }
 
-    public function sendTypingIndicator(string $to): void
+    public function markReadAndSendTypingIndicator(string $messageId): void
     {
-        // NOTE: WhatsApp Cloud API does not currently support typing indicators
-        // like Telegram does. The best practice is to respond quickly and use
-        // read receipts to acknowledge messages.
-        //
-        // This method is kept as a placeholder for future API updates
-        // or for logging purposes.
+        try {
+            $response = $this->client->post("{$this->phoneNumberId}/messages", [
+                'json' => [
+                    'messaging_product' => 'whatsapp',
+                    'status' => 'read',
+                    'message_id' => $messageId,
+                    'typing_indicator' => [
+                        'type' => 'text',
+                    ],
+                ],
+            ]);
 
-        Log::debug('Typing indicator requested (not supported by WhatsApp Cloud API)', [
-            'to' => $to,
-        ]);
+            $body = json_decode($response->getBody()->getContents(), true);
 
-        // No-op: WhatsApp Cloud API doesn't support typing indicators
+            Log::info('WhatsApp typing indicator sent (message marked as read)', [
+                'message_id' => $messageId,
+                'response' => $body,  // This will log the actual JSON response
+            ]);
+
+        } catch (GuzzleException $exception) {
+            Log::warning('WhatsApp typing indicator error: '.$exception->getMessage(), [
+                'message_id' => $messageId,
+                'response' => $exception->hasResponse() ? $exception->getResponse()->getBody()->getContents() : null,
+            ]);
+            // Don't throw - typing indicators are not critical
+        }
     }
 
     public function sendInteractiveList(string $to, array $listData): void
@@ -186,22 +204,22 @@ class WhatsAppService implements MessagingService
                 'to' => $to,
                 'message_id' => $body['messages'][0]['id'] ?? null,
             ]);
-        } catch (GuzzleException $e) {
+        } catch (GuzzleException $exception) {
             $errorDetails = [
                 'to' => $to,
                 'button_data' => $buttonData,
             ];
 
-            if ($e->hasResponse()) {
-                $responseBody = $e->getResponse()->getBody()->getContents();
+            if ($exception->hasResponse()) {
+                $responseBody = $exception->getResponse()->getBody()->getContents();
                 $errorDetails['response'] = $responseBody;
 
-                Log::error('WhatsApp sendInteractiveButtons error: '.$e->getMessage(), $errorDetails);
+                Log::error('WhatsApp sendInteractiveButtons error: '.$exception->getMessage(), $errorDetails);
             } else {
-                Log::error('WhatsApp sendInteractiveButtons error: '.$e->getMessage(), $errorDetails);
+                Log::error('WhatsApp sendInteractiveButtons error: '.$exception->getMessage(), $errorDetails);
             }
 
-            throw $e;
+            throw $exception;
         }
     }
 
@@ -287,17 +305,17 @@ class WhatsAppService implements MessagingService
                     'title' => 'Main Menu',
                     'rows' => [
                         [
-                            'id' => 'menu_catalog',
+                            'id' => \App\Enums\WhatsAppCommand::MenuCatalog->value,
                             'title' => 'Catalog',
                             'description' => 'Browse product groups',
                         ],
                         [
-                            'id' => 'menu_groups',
+                            'id' => \App\Enums\WhatsAppCommand::MenuGroups->value,
                             'title' => 'Groups',
                             'description' => 'View all product groups',
                         ],
                         [
-                            'id' => 'menu_items',
+                            'id' => \App\Enums\WhatsAppCommand::MenuItems->value,
                             'title' => 'Items',
                             'description' => 'View all available items',
                         ],
@@ -358,51 +376,67 @@ class WhatsAppService implements MessagingService
         }
     }
 
-    public function sendGroups(string $to): void
+    public function sendGroups(string $to, int $page = 1): void
     {
         $groups = $this->catalogService->listGroups();
 
-        // WhatsApp limit is 4096 characters, use 3800 to be safe
-        $maxLength = 3800;
-        $messages = [];
-        $currentMessage = "*Available Product Groups:*\n\n";
+        if ($groups->isEmpty()) {
+            $this->sendMessage($to, 'No product groups available at the moment.');
 
-        foreach ($groups as $group) {
-            $groupText = "📁 *{$group->title}*\n";
-            $groupText .= "   Slug: {$group->slug}\n";
-            if ($group->description) {
-                $groupText .= "   {$group->description}\n";
-            }
-            $groupText .= "\n";
-
-            // Check if adding this group would exceed the limit
-            if (strlen($currentMessage.$groupText) > $maxLength) {
-                $messages[] = $currentMessage;
-                $currentMessage = $groupText;
-            } else {
-                $currentMessage .= $groupText;
-            }
+            return;
         }
 
-        // Add the last message
-        if (! empty($currentMessage)) {
-            $messages[] = $currentMessage;
+        // Interactive List Messages have a limit of 10 rows per section
+        // We'll use 9 rows for groups + 1 row for "Next Page" if needed
+        $groupsPerPage = 9;
+        $offset = ($page - 1) * $groupsPerPage;
+        $totalGroups = $groups->count();
+        $hasMoreGroups = $totalGroups > ($offset + $groupsPerPage);
+
+        // Get groups for current page
+        $pageGroups = $groups->skip($offset)->take($groupsPerPage);
+
+        if ($pageGroups->isEmpty()) {
+            $this->sendMessage($to, 'No more groups to display.');
+
+            return;
         }
 
-        // Send all messages with page numbers if multiple pages
-        $totalPages = count($messages);
-        foreach ($messages as $index => $message) {
-            if ($totalPages > 1) {
-                $pageNumber = $index + 1;
-                $message .= "\n_Page {$pageNumber} of {$totalPages}_";
-            }
-            $this->sendMessage($to, $message);
+        $rows = [];
 
-            // Small delay between messages to avoid rate limiting
-            if ($index < $totalPages - 1) {
-                usleep(500000); // 0.5 second delay
-            }
+        foreach ($pageGroups as $group) {
+            $rows[] = [
+                'id' => "group_{$group->slug}",
+                'title' => substr($group->title, 0, 24), // Max 24 characters
+                'description' => $group->description
+                    ? substr($group->description, 0, 72) // Max 72 characters
+                    : "View items in {$group->title}",
+            ];
         }
+
+        // Add "Next Page" button if there are more groups
+        if ($hasMoreGroups) {
+            $nextPage = $page + 1;
+            $rows[] = [
+                'id' => "next_groups_page_{$nextPage}",
+                'title' => '➡️ Next Page',
+                'description' => "View more groups (Page {$nextPage})",
+            ];
+        }
+
+        $pageInfo = $totalGroups > $groupsPerPage ? " (Page {$page})" : '';
+        $bodyText = "Browse all product groups 📁{$pageInfo}\n\nTap a group to view items.";
+
+        $this->sendInteractiveList($to, [
+            'body' => $bodyText,
+            'button' => 'View Groups',
+            'sections' => [
+                [
+                    'title' => 'Product Groups',
+                    'rows' => $rows,
+                ],
+            ],
+        ]);
     }
 
     public function sendItems(string $to, ?string $groupSlug = null, int $page = 1): void
@@ -512,7 +546,7 @@ class WhatsAppService implements MessagingService
         $buttons[] = [
             'type' => 'reply',
             'reply' => [
-                'id' => 'back_to_menu',
+                'id' => \App\Enums\WhatsAppCommand::BackToMenu->value,
                 'title' => '🏠 Main Menu',
             ],
         ];
