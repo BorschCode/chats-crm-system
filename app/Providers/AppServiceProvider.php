@@ -4,58 +4,40 @@ namespace App\Providers;
 
 use App\Services\CatalogService;
 use App\Services\TelegramService;
-use App\Services\WhatsAppWebhookService;
 use App\Telegram\BotHandlers;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use SergiX44\Nutgram\Nutgram;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        // Register Nutgram bot as singleton (only if token is configured)
         $this->app->singleton(Nutgram::class, function ($app) {
             $config = config('services.telegram');
-            $token = $config['bot_token'] ?? null;
+            $token = $config['bot_token'] ?? 'dummy-token';
 
-            // Provide a dummy token if not configured to prevent crashes
-            if (! $token || $token === 'your_bot_token_from_@BotFather') {
-                $token = 'dummy-token-for-development';
+            if ($token === 'your_bot_token_from_@BotFather') {
+                $token = 'dummy-token';
             }
 
             return new Nutgram($token);
         });
 
-        // Register BotHandlers as singleton
         $this->app->singleton(BotHandlers::class, function ($app) {
             return new BotHandlers(
                 $app->make(CatalogService::class),
                 $app->make(TelegramService::class)
             );
         });
-
-        // Register WhatsAppWebhookService as singleton
-        $this->app->singleton(WhatsAppWebhookService::class, function ($app) {
-            return new WhatsAppWebhookService(
-                config('services.whatsapp.webhook_verify_token')
-            );
-        });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // Force HTTPS when behind a proxy (ngrok, load balancer, etc.)
         if (request()->header('X-Forwarded-Proto') === 'https' || request()->header('X-Forwarded-Ssl') === 'on') {
-            \URL::forceScheme('https');
+            URL::forceScheme('https');
         }
 
-        // Register Telegram bot handlers
         if (config('services.telegram.bot_token')) {
             $bot = $this->app->make(Nutgram::class);
             $handlers = $this->app->make(BotHandlers::class);

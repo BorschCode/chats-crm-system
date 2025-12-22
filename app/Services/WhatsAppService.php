@@ -21,11 +21,11 @@ class WhatsAppService implements MessagingService
 
     protected string $apiBaseUrl;
 
-    public function __construct(CatalogService $catalogService)
-    {
+    public function __construct(
+        CatalogService $catalogService,
+        array $config
+    ) {
         $this->catalogService = $catalogService;
-
-        $config = config('services.whatsapp');
         $this->phoneNumberId = $config['phone_number_id'];
         $this->accessToken = $config['access_token'];
         $this->apiVersion = $config['api_version'];
@@ -37,7 +37,6 @@ class WhatsAppService implements MessagingService
                 'Authorization' => "Bearer {$this->accessToken}",
                 'Content-Type' => 'application/json',
             ],
-            'timeout' => 30,
         ]);
     }
 
