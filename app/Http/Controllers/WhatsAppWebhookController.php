@@ -350,6 +350,50 @@ class WhatsAppWebhookController extends Controller
                         ]);
                     }
                 }
+            } elseif (str_starts_with($selectedId, 'next_page_')) {
+                // Handle pagination - format: next_page_{groupSlug}_{pageNumber}
+                $parts = explode('_', $selectedId, 4); // Split into: ['next', 'page', groupSlug, pageNumber]
+
+                if (count($parts) >= 4) {
+                    $groupSlug = $parts[2]; // Extract group slug or 'all'
+                    $page = (int) $parts[3]; // Extract page number
+
+                    Log::info('User requested next page of items', [
+                        'from' => $from,
+                        'group_slug' => $groupSlug,
+                        'page' => $page,
+                    ]);
+
+                    try {
+                        // If groupSlug is 'all', send all items (no filter)
+                        $groupFilter = ($groupSlug === 'all') ? null : $groupSlug;
+                        $this->whatsAppService->sendItems($from, $groupFilter, $page);
+                    } catch (\Exception $e) {
+                        Log::error('Error sending next page of items', [
+                            'from' => $from,
+                            'group_slug' => $groupSlug,
+                            'page' => $page,
+                            'exception' => $e->getMessage(),
+                        ]);
+
+                        try {
+                            $this->whatsAppService->sendMessage(
+                                $from,
+                                'An error occurred while loading more items. Please try again later.'
+                            );
+                        } catch (\Exception $sendError) {
+                            Log::warning('Could not send error message to user', [
+                                'from' => $from,
+                                'error' => $sendError->getMessage(),
+                            ]);
+                        }
+                    }
+                } else {
+                    Log::warning('Invalid next_page ID format', [
+                        'from' => $from,
+                        'selected_id' => $selectedId,
+                    ]);
+                }
             } else {
                 Log::warning('Unknown interactive list ID format', [
                     'from' => $from,
@@ -357,11 +401,67 @@ class WhatsAppWebhookController extends Controller
                 ]);
             }
         } elseif ($type === 'button_reply') {
-            // Handle button replies if needed in the future
+            // Handle button replies (navigation buttons)
+            $buttonId = $interactive['button_reply']['id'] ?? null;
+
+            if (! $buttonId) {
+                Log::warning('Button reply received without ID', ['from' => $from]);
+
+                return;
+            }
+
             Log::info('Button reply received', [
                 'from' => $from,
-                'button_data' => $interactive['button_reply'] ?? [],
+                'button_id' => $buttonId,
             ]);
+
+            // Handle navigation buttons
+            if ($buttonId === 'back_to_menu') {
+                // User clicked "Main Menu" button
+                try {
+                    $this->whatsAppService->sendWelcomeMenu($from);
+                } catch (\Exception $e) {
+                    Log::error('Error sending welcome menu', [
+                        'from' => $from,
+                        'exception' => $e->getMessage(),
+                    ]);
+                }
+            } elseif (str_starts_with($buttonId, 'back_to_list_')) {
+                // User clicked "Back to List" button - format: back_to_list_{groupSlug}
+                $groupSlug = substr($buttonId, 14); // Remove "back_to_list_" prefix
+
+                Log::info('User navigating back to item list', [
+                    'from' => $from,
+                    'group_slug' => $groupSlug,
+                ]);
+
+                try {
+                    $this->whatsAppService->sendItems($from, $groupSlug);
+                } catch (\Exception $e) {
+                    Log::error('Error sending items list', [
+                        'from' => $from,
+                        'group_slug' => $groupSlug,
+                        'exception' => $e->getMessage(),
+                    ]);
+
+                    try {
+                        $this->whatsAppService->sendMessage(
+                            $from,
+                            'An error occurred. Please try again later.'
+                        );
+                    } catch (\Exception $sendError) {
+                        Log::warning('Could not send error message to user', [
+                            'from' => $from,
+                            'error' => $sendError->getMessage(),
+                        ]);
+                    }
+                }
+            } else {
+                Log::warning('Unknown button ID', [
+                    'from' => $from,
+                    'button_id' => $buttonId,
+                ]);
+            }
         } else {
             Log::warning('Unknown interactive type', [
                 'from' => $from,

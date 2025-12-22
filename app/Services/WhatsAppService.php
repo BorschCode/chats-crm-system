@@ -143,6 +143,68 @@ class WhatsAppService implements MessagingService
         }
     }
 
+    public function sendInteractiveButtons(string $to, array $buttonData): void
+    {
+        try {
+            $payload = [
+                'messaging_product' => 'whatsapp',
+                'recipient_type' => 'individual',
+                'to' => $to,
+                'type' => 'interactive',
+                'interactive' => [
+                    'type' => 'button',
+                    'body' => [
+                        'text' => $buttonData['body'],
+                    ],
+                    'action' => [
+                        'buttons' => $buttonData['buttons'],
+                    ],
+                ],
+            ];
+
+            // Add optional header if provided
+            if (isset($buttonData['header'])) {
+                $payload['interactive']['header'] = [
+                    'type' => 'text',
+                    'text' => $buttonData['header'],
+                ];
+            }
+
+            // Add optional footer if provided
+            if (isset($buttonData['footer'])) {
+                $payload['interactive']['footer'] = [
+                    'text' => $buttonData['footer'],
+                ];
+            }
+
+            $response = $this->client->post("{$this->phoneNumberId}/messages", [
+                'json' => $payload,
+            ]);
+
+            $body = json_decode($response->getBody()->getContents(), true);
+            Log::info('WhatsApp interactive buttons sent successfully', [
+                'to' => $to,
+                'message_id' => $body['messages'][0]['id'] ?? null,
+            ]);
+        } catch (GuzzleException $e) {
+            $errorDetails = [
+                'to' => $to,
+                'button_data' => $buttonData,
+            ];
+
+            if ($e->hasResponse()) {
+                $responseBody = $e->getResponse()->getBody()->getContents();
+                $errorDetails['response'] = $responseBody;
+
+                Log::error('WhatsApp sendInteractiveButtons error: '.$e->getMessage(), $errorDetails);
+            } else {
+                Log::error('WhatsApp sendInteractiveButtons error: '.$e->getMessage(), $errorDetails);
+            }
+
+            throw $e;
+        }
+    }
+
     public function sendMessage(string $to, string $text): void
     {
         try {
@@ -343,7 +405,7 @@ class WhatsAppService implements MessagingService
         }
     }
 
-    public function sendItems(string $to, ?string $groupSlug = null): void
+    public function sendItems(string $to, ?string $groupSlug = null, int $page = 1): void
     {
         $items = $this->catalogService->listItems($groupSlug);
         $groupName = $groupSlug ? " in group '{$groupSlug}'" : '';
@@ -354,28 +416,48 @@ class WhatsAppService implements MessagingService
             return;
         }
 
-        // Interactive List Messages have a limit of 10 rows per section and 10 sections max
-        // We'll use one section with up to 10 items
+        // Interactive List Messages have a limit of 10 rows per section
+        // We'll use 9 rows for items + 1 row for "Next Page" if needed
+        $itemsPerPage = 9;
+        $offset = ($page - 1) * $itemsPerPage;
+        $totalItems = $items->count();
+        $hasMoreItems = $totalItems > ($offset + $itemsPerPage);
+
+        // Get items for current page
+        $pageItems = $items->skip($offset)->take($itemsPerPage);
+
+        if ($pageItems->isEmpty()) {
+            $this->sendMessage($to, 'No more items to display.');
+
+            return;
+        }
+
         $rows = [];
-        $count = 0;
 
-        foreach ($items as $item) {
-            if ($count >= 10) {
-                break; // WhatsApp limit: max 10 rows per section
-            }
-
+        foreach ($pageItems as $item) {
             $priceText = "\${$item->price}";
             $rows[] = [
                 'id' => "item_{$item->slug}",
                 'title' => substr($item->title, 0, 24), // Max 24 characters
                 'description' => substr($priceText, 0, 72), // Max 72 characters
             ];
-            $count++;
         }
 
+        // Add "Next Page" button if there are more items
+        if ($hasMoreItems) {
+            $nextPage = $page + 1;
+            $pageIdentifier = $groupSlug ?: 'all';
+            $rows[] = [
+                'id' => "next_page_{$pageIdentifier}_{$nextPage}",
+                'title' => '➡️ Next Page',
+                'description' => "View more items (Page {$nextPage})",
+            ];
+        }
+
+        $pageInfo = $totalItems > $itemsPerPage ? " (Page {$page})" : '';
         $bodyText = $groupSlug
-            ? "Browse items in '{$groupSlug}' 🛍️\n\nTap an item to view details."
-            : "Browse all items 🛍️\n\nTap an item to view details.";
+            ? "Browse items in '{$groupSlug}' 🛍️{$pageInfo}\n\nTap an item to view details."
+            : "Browse all items 🛍️{$pageInfo}\n\nTap an item to view details.";
 
         $this->sendInteractiveList($to, [
             'body' => $bodyText,
@@ -387,21 +469,12 @@ class WhatsAppService implements MessagingService
                 ],
             ],
         ]);
-
-        // If there are more than 10 items, send remaining as text
-        if ($items->count() > 10) {
-            $remainingText = "\n*Additional Items:*\n";
-            foreach ($items->skip(10) as $item) {
-                $remainingText .= "🛍️ *{$item->title}* - \${$item->price}\n";
-                $remainingText .= "   View: item {$item->slug}\n\n";
-            }
-            $this->sendMessage($to, $remainingText);
-        }
     }
 
     public function sendItemDetails(string $to, Item $item): void
     {
         $groupTitle = $item->group ? $item->group->title : 'Uncategorized';
+        $groupSlug = $item->group ? $item->group->slug : null;
 
         // Check if item has a valid image URL
         if ($item->image && filter_var($item->image, FILTER_VALIDATE_URL)) {
@@ -414,6 +487,47 @@ class WhatsAppService implements MessagingService
             $text .= "*Description:*\n{$item->description}";
 
             $this->sendMessage($to, $text);
+        }
+
+        // Send navigation buttons
+        $this->sendNavigationButtons($to, $groupSlug, $groupTitle);
+    }
+
+    protected function sendNavigationButtons(string $to, ?string $groupSlug, string $groupTitle): void
+    {
+        $buttons = [];
+
+        // Add "Back to List" button if item belongs to a group
+        if ($groupSlug) {
+            $buttons[] = [
+                'type' => 'reply',
+                'reply' => [
+                    'id' => "back_to_list_{$groupSlug}",
+                    'title' => substr("⬅️ Back to {$groupTitle}", 0, 20), // Max 20 characters
+                ],
+            ];
+        }
+
+        // Add "Main Menu" button
+        $buttons[] = [
+            'type' => 'reply',
+            'reply' => [
+                'id' => 'back_to_menu',
+                'title' => '🏠 Main Menu',
+            ],
+        ];
+
+        try {
+            $this->sendInteractiveButtons($to, [
+                'body' => 'What would you like to do next?',
+                'buttons' => $buttons,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Could not send navigation buttons', [
+                'to' => $to,
+                'error' => $e->getMessage(),
+            ]);
+            // Don't throw - navigation buttons are not critical
         }
     }
 
