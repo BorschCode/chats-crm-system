@@ -6,6 +6,8 @@ use App\Http\Controllers\WhatsAppWebhookController;
 use App\Http\Middleware\VerifyWhatsAppSignature;
 use Illuminate\Support\Facades\Route;
 use SergiX44\Nutgram\Nutgram;
+use SergiX44\Nutgram\RunningMode\Polling;
+use SergiX44\Nutgram\RunningMode\Webhook;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,9 +21,13 @@ use SergiX44\Nutgram\Nutgram;
 */
 
 // Webhook routes for messaging channels
-// Telegram webhook - Nutgram auto-handles webhook vs polling detection
+// Telegram webhook - set mode based on environment
 Route::post('/webhook/telegram', function (Nutgram $bot) {
     try {
+        // Set running mode based on environment
+        $runningMode = app()->environment('production') ? Webhook::class : Polling::class;
+        $bot->setRunningMode($runningMode);
+
         $bot->run();
 
         return response()->json(['ok' => true]);
