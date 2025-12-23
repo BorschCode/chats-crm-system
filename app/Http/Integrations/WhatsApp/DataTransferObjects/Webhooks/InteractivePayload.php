@@ -39,6 +39,6 @@ class InteractivePayload
      */
     public function getSelectedTitle(): ?string
     {
-        return $this->listReply?->title ?? $this->buttonReply?->text;
+        return $this->listReply?->title ?? $this->buttonReply?->title;
     }
 }

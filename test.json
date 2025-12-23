@@ -1,32 +1,20 @@
 {
-    "method": "GET",
-    "url": "http://023cfd40a8f9.ngrok-free.app/api/webhook/whatsapp?hub.challenge=146983850&hub.mode=subscribe&hub.verify_token=JuI38O7KmXfv",
-    "headers": {
-        "host": [
-            "023cfd40a8f9.ngrok-free.app"
-        ],
-        "user-agent": [
-            "facebookplatform/1.0 (+http://developers.facebook.com)"
-        ],
-        "accept": [
-            "*/*"
-        ],
-        "accept-encoding": [
-            "deflate, gzip"
-        ],
-        "x-forwarded-for": [
-            "2a03:2880:22ff:4e::"
-        ],
-        "x-forwarded-host": [
-            "023cfd40a8f9.ngrok-free.app"
-        ],
-        "x-forwarded-proto": [
-            "https"
-        ]
+    "value": {
+        "context": {
+            "from": "15551862234",
+            "id": "wamid.HBgMMzgwOTk5NzI5Mzk2FQIAERgSODZBODI0QTE5N0I3NUMyQThFAA=="
+        },
+        "from": "380999729396",
+        "id": "wamid.HBgMMzgwOTk5NzI5Mzk2FQIAEhggQUMxNzc4NjA1OUYyQURDMkVENzk5REI1OUY1RUYwMDMA",
+        "timestamp": "1766476256",
+        "type": "interactive",
+        "interactive": {
+            "type": "button_reply",
+            "button_reply": {
+                "id": "back_to_list_electronics",
+                "title": "⬅️ Back to Elect"
+            }
+        }
     },
-    "query_params": {
-        "hub_mode": "subscribe",
-        "hub_challenge": "146983850",
-        "hub_verify_token": "JuI38O7KmXfv"
-    }
+    "field": "messages"
 }
