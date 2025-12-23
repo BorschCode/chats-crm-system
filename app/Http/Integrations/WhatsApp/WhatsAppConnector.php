@@ -41,6 +41,13 @@ class WhatsAppConnector extends Connector
         });
     }
 
+    /**
+     * @throws AccessTokenInvalidException
+     * @throws MessageTooLongException
+     * @throws \JsonException
+     * @throws RecipientNotAllowedException
+     * @throws \Exception
+     */
     protected function handleErrorResponse(Response $response): void
     {
         $data = $response->json();

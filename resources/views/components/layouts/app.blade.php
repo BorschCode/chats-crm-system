@@ -8,6 +8,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 min-h-screen">
+        <x-header />
         {{ $slot }}
     </body>
 </html>
