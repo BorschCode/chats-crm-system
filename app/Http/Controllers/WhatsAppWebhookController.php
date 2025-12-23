@@ -34,6 +34,13 @@ class WhatsAppWebhookController extends Controller
 
             return response('', Response::HTTP_OK);
         } catch (\Exception $exception) {
+            \Illuminate\Support\Facades\Log::error('WhatsApp webhook handler exception', [
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+
             return response('', Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
