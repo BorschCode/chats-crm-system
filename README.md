@@ -47,6 +47,49 @@ A modern, multi-channel product catalog system built with **Laravel 12** that de
 
 ---
 
+## 🎥 Video Demo
+
+Watch the WhatsApp catalog system in action:
+
+<div align="center">
+
+[![Watch Video Demo](./docs/whatsap/item.png)](https://youtube.com/shorts/DiINnmHytQE?feature=share)
+
+**👆 Click to watch the full demo on YouTube Shorts**
+
+[![YouTube](https://img.shields.io/badge/▶️_Watch_Now-YouTube_Shorts-red?style=for-the-badge&logo=youtube)](https://youtube.com/shorts/DiINnmHytQE?feature=share)
+
+### Video Highlights
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <a href="https://youtube.com/shorts/DiINnmHytQE?feature=share">
+        <img src="./docs/whatsap/index.png" alt="WhatsApp Menu" width="200"/>
+      </a>
+      <br/>
+      <b>Interactive Menu</b>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://youtube.com/shorts/DiINnmHytQE?feature=share">
+        <img src="./docs/whatsap/item.png" alt="Product Details" width="200"/>
+      </a>
+      <br/>
+      <b>Product Details</b>
+    </td>
+    <td align="center" width="33%">
+      <a href="https://youtube.com/shorts/DiINnmHytQE?feature=share">
+        <img src="./docs/telegram/items.png" alt="Telegram View" width="200"/>
+      </a>
+      <br/>
+      <b>Multi-Platform</b>
+    </td>
+  </tr>
+</table>
+
+</div>
+
+---
+
 ## 📸 Screenshots
 
 <table>
