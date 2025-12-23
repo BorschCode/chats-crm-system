@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\WhatsAppCommand;
 use App\Http\Integrations\WhatsApp\DataTransferObjects\Responses\MessageResponse;
 use App\Http\Integrations\WhatsApp\Exceptions\AccessTokenInvalidException;
 use App\Http\Integrations\WhatsApp\Exceptions\MessageTooLongException;
@@ -183,17 +184,17 @@ class WhatsAppService implements MessagingService
                     'title' => 'Main Menu',
                     'rows' => [
                         [
-                            'id' => \App\Enums\WhatsAppCommand::MenuCatalog->value,
+                            'id' => WhatsAppCommand::MenuCatalog->value,
                             'title' => 'Catalog',
                             'description' => 'Browse product groups',
                         ],
                         [
-                            'id' => \App\Enums\WhatsAppCommand::MenuGroups->value,
+                            'id' => WhatsAppCommand::MenuGroups->value,
                             'title' => 'Groups',
                             'description' => 'View all product groups',
                         ],
                         [
-                            'id' => \App\Enums\WhatsAppCommand::MenuItems->value,
+                            'id' => WhatsAppCommand::MenuItems->value,
                             'title' => 'Items',
                             'description' => 'View all available items',
                         ],
@@ -347,11 +348,10 @@ class WhatsAppService implements MessagingService
         $rows = [];
 
         foreach ($pageItems as $item) {
-            $priceText = "\${$item->price}";
             $rows[] = [
                 'id' => "item_{$item->slug}",
-                'title' => substr($item->title, 0, 24), // Max 24 characters
-                'description' => substr($priceText, 0, 72), // Max 72 characters
+                'title' => $this->truncateWords($item->title, 24),
+                'description' => '$'.number_format($item->price, 2),
             ];
         }
 
@@ -383,6 +383,28 @@ class WhatsAppService implements MessagingService
         ]);
     }
 
+    protected function truncateWords(string $text, int $maxLength): string
+    {
+        if (mb_strlen($text) <= $maxLength) {
+            return $text;
+        }
+
+        $words = preg_split('/\s+/', $text);
+        $result = '';
+
+        foreach ($words as $word) {
+            $candidate = trim($result.' '.$word);
+
+            if (mb_strlen($candidate) > $maxLength) {
+                break;
+            }
+
+            $result = $candidate;
+        }
+
+        return $result ?: mb_substr($text, 0, $maxLength);
+    }
+
     public function sendItemDetails(string $to, Item $item): void
     {
         $groupTitle = $item->group ? $item->group->title : 'Uncategorized';
@@ -409,22 +431,22 @@ class WhatsAppService implements MessagingService
     {
         $buttons = [];
 
-        // Add "Back to List" button if item belongs to a group
         if ($groupSlug) {
+            $title = $this->buildBackButtonTitle($groupTitle);
+
             $buttons[] = [
                 'type' => 'reply',
                 'reply' => [
                     'id' => "back_to_list_{$groupSlug}",
-                    'title' => substr("⬅️ Back to {$groupTitle}", 0, 20), // Max 20 characters
+                    'title' => $title,
                 ],
             ];
         }
 
-        // Add "Main Menu" button
         $buttons[] = [
             'type' => 'reply',
             'reply' => [
-                'id' => \App\Enums\WhatsAppCommand::BackToMenu->value,
+                'id' => WhatsAppCommand::BackToMenu->value,
                 'title' => '🏠 Main Menu',
             ],
         ];
@@ -434,13 +456,25 @@ class WhatsAppService implements MessagingService
                 'body' => 'What would you like to do next?',
                 'buttons' => $buttons,
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::warning('Could not send navigation buttons', [
                 'to' => $to,
                 'error' => $e->getMessage(),
             ]);
-            // Don't throw - navigation buttons are not critical
         }
+    }
+
+    protected function buildBackButtonTitle(string $groupTitle): string
+    {
+        $full = "⬅️ {$groupTitle}";
+
+        // WhatsApp limit is 20 chars
+        if (mb_strlen($full) <= 20) {
+            return $full;
+        }
+
+        // Fallback — clean and readable
+        return '⬅️ Back';
     }
 
     protected function sendImageWithCaption(string $to, Item $item, string $groupTitle): void
