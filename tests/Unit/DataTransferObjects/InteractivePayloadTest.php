@@ -31,7 +31,7 @@ test('can parse button_reply interactive payload', function () {
         'type' => 'button_reply',
         'button_reply' => [
             'id' => 'back_to_menu',
-            'text' => 'Main Menu',
+            'title' => 'Main Menu',
         ],
     ];
 
@@ -42,7 +42,7 @@ test('can parse button_reply interactive payload', function () {
         ->and($interactive->getSelectedTitle())->toBe('Main Menu')
         ->and($interactive->buttonReply)->toBeInstanceOf(ButtonReplyPayload::class)
         ->and($interactive->buttonReply->id)->toBe('back_to_menu')
-        ->and($interactive->buttonReply->text)->toBe('Main Menu')
+        ->and($interactive->buttonReply->title)->toBe('Main Menu')
         ->and($interactive->listReply)->toBeNull();
 });
 
