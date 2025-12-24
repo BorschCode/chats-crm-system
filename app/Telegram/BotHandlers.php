@@ -55,18 +55,21 @@ class BotHandlers
         // Groups command
         $bot->onCommand('groups', function (Nutgram $bot) {
             $chatId = (string) $bot->chatId();
+            $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $this->telegramService->sendGroups($chatId);
         });
 
         // Items command (with optional group filter)
         $bot->onCommand('items {groupSlug?}', function (Nutgram $bot, ?string $groupSlug = null) {
             $chatId = (string) $bot->chatId();
+            $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $this->telegramService->sendItems($chatId, $groupSlug);
         });
 
         // Item details command
         $bot->onCommand('item {itemSlug}', function (Nutgram $bot, string $itemSlug) {
             $chatId = (string) $bot->chatId();
+            $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $item = $this->catalogService->getItem($itemSlug);
 
             if ($item) {
