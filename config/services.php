@@ -57,4 +57,8 @@ return [
         'api_base_url' => 'https://graph.facebook.com',
     ],
 
+    'pexels' => [
+        'key' => env('PEXELS_API_KEY'),
+    ],
+
 ];

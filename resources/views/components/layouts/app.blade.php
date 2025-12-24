@@ -7,8 +7,11 @@
         <title>{{ $title ?? 'Page Title' }}</title>
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 min-h-screen">
+    <body class="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 min-h-screen flex flex-col">
         <x-header />
-        {{ $slot }}
+        <main class="flex-grow">
+            {{ $slot }}
+        </main>
+        <x-footer />
     </body>
 </html>
