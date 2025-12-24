@@ -50,10 +50,7 @@ class WhatsAppWebhookService
             'type' => $message->type,
         ]);
 
-        // Позначаємо як прочитане та вмикаємо індикатор друку
-        if (method_exists($messaging, 'markReadAndSendTypingIndicator')) {
-            $messaging->markReadAndSendTypingIndicator($message->id);
-        }
+        $messaging->markReadAndSendTypingIndicator($message->id, $message->from);
 
         match ($message->type) {
             'interactive' => $this->handleInteractive($message->from, $message->interactive, $messaging),

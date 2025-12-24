@@ -19,6 +19,29 @@ class TelegramService implements MessagingService
         $this->bot = $bot;
     }
 
+    public function markReadAndSendTypingIndicator(string $messageId, string $recipient): void
+    {
+        // Telegram doesn't have a "mark as read" API
+        // But it DOES support typing indicators via sendChatAction
+        try {
+            $this->bot->sendChatAction(
+                chat_id: $recipient,
+                action: 'typing'
+            );
+
+            Log::info('Telegram: Typing indicator sent', [
+                'message_id' => $messageId,
+                'chat_id' => $recipient,
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Telegram: Failed to send typing indicator - '.$e->getMessage(), [
+                'message_id' => $messageId,
+                'chat_id' => $recipient,
+            ]);
+            // Don't throw - typing indicators are not critical
+        }
+    }
+
     public function sendMessage(string $to, string $text): void
     {
         try {
@@ -70,7 +93,7 @@ class TelegramService implements MessagingService
         $this->sendMessage($to, $text);
     }
 
-    public function sendGroups(string $to): void
+    public function sendGroups(string $to, int $page = 1): void
     {
         $groups = $this->catalogService->listGroups();
         $text = "*Available Product Groups:*\n\n";
@@ -87,7 +110,7 @@ class TelegramService implements MessagingService
         $this->sendMessage($to, $text);
     }
 
-    public function sendItems(string $to, ?string $groupSlug = null): void
+    public function sendItems(string $to, ?string $groupSlug = null, int $page = 1): void
     {
         $items = $this->catalogService->listItems($groupSlug);
         $groupName = $groupSlug ? " in group '{$groupSlug}'" : '';

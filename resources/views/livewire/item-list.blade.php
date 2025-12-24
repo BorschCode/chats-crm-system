@@ -1,5 +1,27 @@
+@php
+    /**
+     * View: livewire.item-list
+     *
+     * Variables provided by App\Livewire\ItemList::render()
+     *
+     * @var \Illuminate\Contracts\Pagination\LengthAwarePaginator<\App\Models\Item> $items
+     * @var \App\Models\Item $item
+     * @var \Illuminate\Database\Eloquent\Collection<int, \App\Models\Group> $groups
+     * @var string|null $groupSlug
+     *
+     * Livewire reactive properties (proxied from component):
+     * @var string $search
+     * @var int|null $groupFilter
+     * @var float|null $minPrice
+     * @var float|null $maxPrice
+     * @var string $sortBy
+     * @var string $sortDirection
+     */
+@endphp
+
 <div class="container mx-auto px-4 py-8">
-    {{-- Header --}}
+
+{{-- Header --}}
     <div class="mb-8">
         <h1 class="text-4xl font-bold text-gray-900 mb-2">
             @if ($groupSlug)

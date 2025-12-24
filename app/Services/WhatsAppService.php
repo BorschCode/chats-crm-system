@@ -31,13 +31,7 @@ class WhatsAppService implements MessagingService
         $this->connector = $connector;
     }
 
-    /** @deprecated use markReadAndSendTypingIndicator */
-    public function markAsRead(string $messageId): void
-    {
-        $this->markReadAndSendTypingIndicator($messageId);
-    }
-
-    public function markReadAndSendTypingIndicator(string $messageId): void
+    public function markReadAndSendTypingIndicator(string $messageId, string $recipient): void
     {
         try {
             $request = new MarkMessageAsReadRequest(
@@ -47,13 +41,15 @@ class WhatsAppService implements MessagingService
 
             $response = $this->connector->send($request);
 
-            Log::info('WhatsApp typing indicator sent (message marked as read)', [
+            Log::info('WhatsApp: Message marked as read (typing indicator)', [
                 'message_id' => $messageId,
+                'recipient' => $recipient,
                 'response' => $response->json(),
             ]);
         } catch (\Exception $exception) {
-            Log::warning('WhatsApp typing indicator error: '.$exception->getMessage(), [
+            Log::warning('WhatsApp: Failed to mark message as read - '.$exception->getMessage(), [
                 'message_id' => $messageId,
+                'recipient' => $recipient,
             ]);
             // Don't throw - typing indicators are not critical
         }

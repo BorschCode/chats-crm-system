@@ -14,6 +14,16 @@ class InstagramService implements MessagingService
         $this->catalogService = $catalogService;
     }
 
+    public function markReadAndSendTypingIndicator(string $messageId, string $recipient): void
+    {
+        // In a real application, this would use the Instagram Messaging API
+        // to mark message as read and send a typing indicator
+        Log::info('Instagram: Mark as read and typing indicator', [
+            'message_id' => $messageId,
+            'recipient' => $recipient,
+        ]);
+    }
+
     public function sendMessage(string $to, string $text): void
     {
         // In a real application, this would use the Instagram Messaging API to send a message.
@@ -45,7 +55,7 @@ class InstagramService implements MessagingService
         $this->sendMessage($to, $text);
     }
 
-    public function sendGroups(string $to): void
+    public function sendGroups(string $to, int $page = 1): void
     {
         $groups = $this->catalogService->listGroups();
         $text = "Available Groups:\n\n";
@@ -55,7 +65,7 @@ class InstagramService implements MessagingService
         $this->sendMessage($to, $text);
     }
 
-    public function sendItems(string $to, ?string $groupSlug = null): void
+    public function sendItems(string $to, ?string $groupSlug = null, int $page = 1): void
     {
         $items = $this->catalogService->listItems($groupSlug);
         $groupName = $groupSlug ? " in '{$groupSlug}'" : '';
