@@ -406,9 +406,12 @@ class WhatsAppService implements MessagingService
         $groupTitle = $item->group ? $item->group->title : 'Uncategorized';
         $groupSlug = $item->group ? $item->group->slug : null;
 
-        // Check if item has a valid image URL
-        if ($item->image && filter_var($item->image, FILTER_VALIDATE_URL)) {
-            $this->sendImageWithCaption($to, $item, $groupTitle);
+        // Convert image path to absolute URL if needed
+        $imageUrl = $this->getAbsoluteImageUrl($item->image);
+
+        // Check if we have a valid image URL
+        if ($imageUrl) {
+            $this->sendImageWithCaption($to, $item, $groupTitle, $imageUrl);
         } else {
             // Send as text message if no image
             $text = "*{$item->title}*\n\n";
@@ -473,7 +476,34 @@ class WhatsAppService implements MessagingService
         return '⬅️ Back';
     }
 
-    protected function sendImageWithCaption(string $to, Item $item, string $groupTitle): void
+    /**
+     * Convert relative image path to absolute URL
+     */
+    protected function getAbsoluteImageUrl(?string $imagePath): ?string
+    {
+        if (! $imagePath) {
+            return null;
+        }
+
+        // If already an absolute URL, return as-is
+        if (filter_var($imagePath, FILTER_VALIDATE_URL)) {
+            return $imagePath;
+        }
+
+        // If it's a relative path starting with /, convert to absolute URL
+        if (str_starts_with($imagePath, '/')) {
+            $baseUrl = rtrim(config('app.url'), '/');
+
+            return $baseUrl.$imagePath;
+        }
+
+        // If it's a relative path without leading slash, add it
+        $baseUrl = rtrim(config('app.url'), '/');
+
+        return $baseUrl.'/'.$imagePath;
+    }
+
+    protected function sendImageWithCaption(string $to, Item $item, string $groupTitle, string $imageUrl): void
     {
         $caption = "*{$item->title}*\n\n";
         $caption .= "*Group:* {$groupTitle}\n";
@@ -484,29 +514,31 @@ class WhatsAppService implements MessagingService
             $request = new SendImageMessageRequest(
                 phoneNumberId: $this->connector->phoneNumberId,
                 to: $to,
-                imageUrl: $item->image,
+                imageUrl: $imageUrl,
                 caption: $caption
             );
 
             $response = $this->connector->send($request);
             $messageResponse = MessageResponse::fromResponse($response);
 
-            Log::info('WhatsApp image sent successfully', [
+            Log::info('WhatsApp: Image sent successfully', [
                 'to' => $to,
                 'message_id' => $messageResponse->getMessageId(),
+                'image_url' => $imageUrl,
             ]);
         } catch (\Exception $e) {
-            Log::error('WhatsApp sendImageWithCaption error: '.$e->getMessage(), [
+            Log::error('WhatsApp: Failed to send image - '.$e->getMessage(), [
                 'to' => $to,
                 'item_id' => $item->id,
+                'image_url' => $imageUrl,
+                'error' => $e->getMessage(),
             ]);
 
             // Fallback to text message
             $text = "*{$item->title}*\n\n";
             $text .= "*Group:* {$groupTitle}\n";
             $text .= "*Price:* \${$item->price}\n\n";
-            $text .= "*Description:*\n{$item->description}\n\n";
-            $text .= "*Image:* {$item->image}";
+            $text .= "*Description:*\n{$item->description}";
 
             $this->sendMessage($to, $text);
         }
