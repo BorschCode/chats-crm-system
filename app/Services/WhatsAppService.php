@@ -279,6 +279,16 @@ class WhatsAppService implements MessagingService
 
         $rows = [];
 
+        // Add "Previous Page" button if we're not on page 1
+        if ($page > 1) {
+            $prevPage = $page - 1;
+            $rows[] = [
+                'id' => "prev_groups_page_{$prevPage}",
+                'title' => '⬅️ Previous Page',
+                'description' => "Go back to page {$prevPage}",
+            ];
+        }
+
         foreach ($pageGroups as $group) {
             $rows[] = [
                 'id' => "group_{$group->slug}",
@@ -342,6 +352,17 @@ class WhatsAppService implements MessagingService
         }
 
         $rows = [];
+
+        // Add "Previous Page" button if we're not on page 1
+        if ($page > 1) {
+            $prevPage = $page - 1;
+            $pageIdentifier = $groupSlug ?: 'all';
+            $rows[] = [
+                'id' => "prev_page_{$pageIdentifier}_{$prevPage}",
+                'title' => '⬅️ Previous Page',
+                'description' => "Go back to page {$prevPage}",
+            ];
+        }
 
         foreach ($pageItems as $item) {
             $rows[] = [
