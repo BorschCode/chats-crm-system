@@ -262,11 +262,12 @@ class WhatsAppService implements MessagingService
         }
 
         // Interactive List Messages have a limit of 10 rows per section
-        // We'll use 9 rows for groups + 1 row for "Next Page" if needed
-        $groupsPerPage = 9;
+        // Use 8 groups per page to leave room for up to 2 navigation buttons (prev + next)
+        $groupsPerPage = 8;
         $offset = ($page - 1) * $groupsPerPage;
         $totalGroups = $groups->count();
         $hasMoreGroups = $totalGroups > ($offset + $groupsPerPage);
+        $hasPrevButton = $page > 1;
 
         // Get groups for current page
         $pageGroups = $groups->skip($offset)->take($groupsPerPage);
@@ -280,7 +281,7 @@ class WhatsAppService implements MessagingService
         $rows = [];
 
         // Add "Previous Page" button if we're not on page 1
-        if ($page > 1) {
+        if ($hasPrevButton) {
             $prevPage = $page - 1;
             $rows[] = [
                 'id' => "prev_groups_page_{$prevPage}",
@@ -336,11 +337,12 @@ class WhatsAppService implements MessagingService
         }
 
         // Interactive List Messages have a limit of 10 rows per section
-        // We'll use 9 rows for items + 1 row for "Next Page" if needed
-        $itemsPerPage = 9;
+        // Use 8 items per page to leave room for up to 2 navigation buttons (prev + next)
+        $itemsPerPage = 8;
         $offset = ($page - 1) * $itemsPerPage;
         $totalItems = $items->count();
         $hasMoreItems = $totalItems > ($offset + $itemsPerPage);
+        $hasPrevButton = $page > 1;
 
         // Get items for current page
         $pageItems = $items->skip($offset)->take($itemsPerPage);
@@ -354,7 +356,7 @@ class WhatsAppService implements MessagingService
         $rows = [];
 
         // Add "Previous Page" button if we're not on page 1
-        if ($page > 1) {
+        if ($hasPrevButton) {
             $prevPage = $page - 1;
             $pageIdentifier = $groupSlug ?: 'all';
             $rows[] = [
