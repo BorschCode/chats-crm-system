@@ -106,8 +106,10 @@ class WhatsAppWebhookService
                 $messaging->sendItems($from, Str::after($selectedId, 'group_'));
             } elseif (str_starts_with($selectedId, 'item_')) {
                 $this->sendItemDetails($from, Str::after($selectedId, 'item_'), $messaging);
-            } elseif (str_starts_with($selectedId, 'next_page_')) {
-                $this->handlePagination($from, $selectedId, $messaging);
+            } elseif (str_starts_with($selectedId, 'next_page_') || str_starts_with($selectedId, 'prev_page_')) {
+                $this->handleItemsPagination($from, $selectedId, $messaging);
+            } elseif (str_starts_with($selectedId, 'next_groups_page_') || str_starts_with($selectedId, 'prev_groups_page_')) {
+                $this->handleGroupsPagination($from, $selectedId, $messaging);
             } elseif (str_starts_with($selectedId, 'back_to_list_')) {
                 $messaging->sendItems($from, Str::after($selectedId, 'back_to_list_'));
             }
@@ -133,15 +135,26 @@ class WhatsAppWebhookService
         }
     }
 
-    protected function handlePagination(string $from, string $id, MessagingService $messaging): void
+    protected function handleItemsPagination(string $from, string $id, MessagingService $messaging): void
     {
-        // Формат: next_page_{groupSlug}_{pageNumber}
+        // Format: next_page_{groupSlug}_{pageNumber} or prev_page_{groupSlug}_{pageNumber}
         $parts = explode('_', $id);
         if (count($parts) >= 4) {
             $group = $parts[2] === 'all' ? null : $parts[2];
             $page = (int) $parts[3];
-            Log::info('Pagination triggered', ['group' => $group, 'page' => $page]);
+            Log::info('Items pagination triggered', ['group' => $group, 'page' => $page]);
             $messaging->sendItems($from, $group, $page);
+        }
+    }
+
+    protected function handleGroupsPagination(string $from, string $id, MessagingService $messaging): void
+    {
+        // Format: next_groups_page_{pageNumber} or prev_groups_page_{pageNumber}
+        $parts = explode('_', $id);
+        if (count($parts) >= 4) {
+            $page = (int) $parts[3];
+            Log::info('Groups pagination triggered', ['page' => $page]);
+            $messaging->sendGroups($from, $page);
         }
     }
 
