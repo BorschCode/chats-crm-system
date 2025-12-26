@@ -53,12 +53,12 @@ Watch the WhatsApp catalog system in action:
 
 <div align="center">
 
-<video width="600" controls>
-  <source src="https://github.com/user-attachments/assets/8d776d3e-6aeb-4db1-9099-10a58ac96142" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+<details open>
+  <summary>📱 Multi-channel catalog system demo (click to play)</summary>
 
-**📱 Multi-channel catalog system demo**
+  <video src="https://github.com/user-attachments/assets/8d776d3e-6aeb-4db1-9099-10a58ac96142" controls="controls" muted="muted" style="max-width: 100%;">
+  </video>
+</details>
 
 *Also available on [YouTube Shorts](https://youtube.com/shorts/DiINnmHytQE?feature=share)*
 
