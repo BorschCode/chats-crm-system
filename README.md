@@ -53,33 +53,30 @@ Watch the WhatsApp catalog system in action:
 
 <div align="center">
 
-[![Watch Video Demo](./docs/whatsap/item.png)](https://youtube.com/shorts/DiINnmHytQE?feature=share)
+<video width="600" controls>
+  <source src="https://github.com/user-attachments/assets/8d776d3e-6aeb-4db1-9099-10a58ac96142" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
-**👆 Click to watch the full demo on YouTube Shorts**
+**📱 Multi-channel catalog system demo**
 
-[![YouTube](https://img.shields.io/badge/▶️_Watch_Now-YouTube_Shorts-red?style=for-the-badge&logo=youtube)](https://youtube.com/shorts/DiINnmHytQE?feature=share)
+*Also available on [YouTube Shorts](https://youtube.com/shorts/DiINnmHytQE?feature=share)*
 
 ### Video Highlights
 <table>
   <tr>
     <td align="center" width="33%">
-      <a href="https://youtube.com/shorts/DiINnmHytQE?feature=share">
-        <img src="./docs/whatsap/index.png" alt="WhatsApp Menu" width="200"/>
-      </a>
+      <img src="./docs/whatsap/index.png" alt="WhatsApp Menu" width="200"/>
       <br/>
       <b>Interactive Menu</b>
     </td>
     <td align="center" width="33%">
-      <a href="https://youtube.com/shorts/DiINnmHytQE?feature=share">
-        <img src="./docs/whatsap/item.png" alt="Product Details" width="200"/>
-      </a>
+      <img src="./docs/whatsap/item.png" alt="Product Details" width="200"/>
       <br/>
       <b>Product Details</b>
     </td>
     <td align="center" width="33%">
-      <a href="https://youtube.com/shorts/DiINnmHytQE?feature=share">
-        <img src="./docs/telegram/items.png" alt="Telegram View" width="200"/>
-      </a>
+      <img src="./docs/telegram/items.png" alt="Telegram View" width="200"/>
       <br/>
       <b>Multi-Platform</b>
     </td>
