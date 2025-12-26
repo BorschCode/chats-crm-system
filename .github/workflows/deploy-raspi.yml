@@ -12,6 +12,8 @@ jobs:
   deploy:
     name: Deploy to Raspberry Pi
     runs-on: [self-hosted, Linux, ARM64]
+    permissions:
+      contents: read
     environment: raspberry
 
     env:
