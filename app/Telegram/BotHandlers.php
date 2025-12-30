@@ -89,7 +89,7 @@ class BotHandlers
         $bot->fallback(function (Nutgram $bot) {
             // Send plain text without Markdown to avoid parsing errors
             $bot->sendMessage(
-                text: "I didn't recognize that command.\n\nUse /start to browse the catalog.",
+                text: "Base error handler. I didn't recognize that command.\n\nUse /start to browse the catalog.",
                 chat_id: $bot->chatId()
             );
         });
