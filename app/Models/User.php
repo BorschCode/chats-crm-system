@@ -15,6 +15,10 @@ use Illuminate\Support\Str;
  * @property \Illuminate\Support\Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $remember_token
+ * @property string|null $telegram_chat_id
+ * @property string|null $telegram_username
+ * @property \App\Enums\Language $language
+ * @property \App\Enums\Gender|null $gender
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
@@ -24,6 +28,7 @@ use Illuminate\Support\Str;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User byTelegramChatId(string $chatId)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
@@ -32,6 +37,10 @@ use Illuminate\Support\Str;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramChatId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereTelegramUsername($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereLanguage($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereGender($value)
  *
  * @mixin \Eloquent
  */
@@ -49,6 +58,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'telegram_chat_id',
+        'telegram_username',
+        'language',
+        'gender',
     ];
 
     /**
@@ -71,6 +84,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'language' => \App\Enums\Language::class,
+            'gender' => \App\Enums\Gender::class,
         ];
     }
 
@@ -84,5 +99,13 @@ class User extends Authenticatable
             ->take(2)
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
+    }
+
+    /**
+     * Scope to find user by Telegram chat ID
+     */
+    public function scopeByTelegramChatId($query, string $chatId)
+    {
+        return $query->where('telegram_chat_id', $chatId);
     }
 }

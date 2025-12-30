@@ -17,9 +17,10 @@ class BotHandlers
     protected TelegramService $telegramService;
 
     public function __construct(
-        CatalogService $catalogService,
+        CatalogService  $catalogService,
         TelegramService $telegramService
-    ) {
+    )
+    {
         $this->catalogService = $catalogService;
         $this->telegramService = $telegramService;
     }
@@ -33,7 +34,7 @@ class BotHandlers
                 reply_markup: InlineKeyboardMarkup::make()->addRow(
                     InlineKeyboardButton::make(
                         '🛍️ Open Catalog',
-                        web_app: WebAppInfo::make(url: config('app.url').'/telegram/app')
+                        web_app: WebAppInfo::make(url: config('app.url') . '/telegram/app')
                     )
                 )
             );
@@ -46,7 +47,7 @@ class BotHandlers
                 reply_markup: InlineKeyboardMarkup::make()->addRow(
                     InlineKeyboardButton::make(
                         '🛍️ Open Catalog',
-                        web_app: WebAppInfo::make(url: config('app.url').'/telegram/app')
+                        web_app: WebAppInfo::make(url: config('app.url') . '/telegram/app')
                     )
                 )
             );
@@ -54,21 +55,21 @@ class BotHandlers
 
         // Groups command
         $bot->onCommand('groups', function (Nutgram $bot) {
-            $chatId = (string) $bot->chatId();
+            $chatId = (string)$bot->chatId();
             $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $this->telegramService->sendGroups($chatId);
         });
 
         // Items command (with optional group filter)
         $bot->onCommand('items {groupSlug?}', function (Nutgram $bot, ?string $groupSlug = null) {
-            $chatId = (string) $bot->chatId();
+            $chatId = (string)$bot->chatId();
             $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $this->telegramService->sendItems($chatId, $groupSlug);
         });
 
         // Item details command
         $bot->onCommand('item {itemSlug}', function (Nutgram $bot, string $itemSlug) {
-            $chatId = (string) $bot->chatId();
+            $chatId = (string)$bot->chatId();
             $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $item = $this->catalogService->getItem($itemSlug);
 
@@ -83,6 +84,7 @@ class BotHandlers
             }
         });
 
+
         // Fallback handler for unrecognized messages
         $bot->fallback(function (Nutgram $bot) {
             // Send plain text without Markdown to avoid parsing errors
@@ -94,7 +96,7 @@ class BotHandlers
 
         // Exception handler
         $bot->onException(function (Nutgram $bot, \Throwable $exception) {
-            Log::error('Telegram bot error: '.$exception->getMessage(), [
+            Log::error('Telegram bot error: ' . $exception->getMessage(), [
                 'exception' => $exception,
                 'update' => $bot->update(),
             ]);
@@ -105,7 +107,7 @@ class BotHandlers
                     chat_id: $bot->chatId()
                 );
             } catch (\Exception $e) {
-                Log::error('Failed to send error message: '.$e->getMessage());
+                Log::error('Failed to send error message: ' . $e->getMessage());
             }
         });
     }
