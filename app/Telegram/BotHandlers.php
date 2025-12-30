@@ -17,10 +17,9 @@ class BotHandlers
     protected TelegramService $telegramService;
 
     public function __construct(
-        CatalogService  $catalogService,
+        CatalogService $catalogService,
         TelegramService $telegramService
-    )
-    {
+    ) {
         $this->catalogService = $catalogService;
         $this->telegramService = $telegramService;
     }
@@ -30,11 +29,11 @@ class BotHandlers
         // Start command - Launch Mini App
         $bot->onCommand('start', function (Nutgram $bot) {
             $bot->sendMessage(
-                text: "Welcome! 👋\n\nTap the button below to browse our catalog in an interactive app.",
+                text: __('telegram.commands.start.message'),
                 reply_markup: InlineKeyboardMarkup::make()->addRow(
                     InlineKeyboardButton::make(
-                        '🛍️ Open Catalog',
-                        web_app: WebAppInfo::make(url: config('app.url') . '/telegram/app')
+                        __('telegram.commands.start.button'),
+                        web_app: WebAppInfo::make(url: config('app.url').'/telegram/app')
                     )
                 )
             );
@@ -43,11 +42,11 @@ class BotHandlers
         // Catalog command - Launch Mini App
         $bot->onCommand('catalog', function (Nutgram $bot) {
             $bot->sendMessage(
-                text: '🛍️ Opening catalog...',
+                text: __('telegram.commands.catalog.message'),
                 reply_markup: InlineKeyboardMarkup::make()->addRow(
                     InlineKeyboardButton::make(
-                        '🛍️ Open Catalog',
-                        web_app: WebAppInfo::make(url: config('app.url') . '/telegram/app')
+                        __('telegram.commands.catalog.button'),
+                        web_app: WebAppInfo::make(url: config('app.url').'/telegram/app')
                     )
                 )
             );
@@ -55,21 +54,21 @@ class BotHandlers
 
         // Groups command
         $bot->onCommand('groups', function (Nutgram $bot) {
-            $chatId = (string)$bot->chatId();
+            $chatId = (string) $bot->chatId();
             $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $this->telegramService->sendGroups($chatId);
         });
 
         // Items command (with optional group filter)
         $bot->onCommand('items {groupSlug?}', function (Nutgram $bot, ?string $groupSlug = null) {
-            $chatId = (string)$bot->chatId();
+            $chatId = (string) $bot->chatId();
             $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $this->telegramService->sendItems($chatId, $groupSlug);
         });
 
         // Item details command
         $bot->onCommand('item {itemSlug}', function (Nutgram $bot, string $itemSlug) {
-            $chatId = (string)$bot->chatId();
+            $chatId = (string) $bot->chatId();
             $this->telegramService->markReadAndSendTypingIndicator('', $chatId);
             $item = $this->catalogService->getItem($itemSlug);
 
@@ -78,36 +77,26 @@ class BotHandlers
             } else {
                 // Use bot directly to avoid Markdown parsing issues
                 $bot->sendMessage(
-                    text: 'Item not found. Use /start to browse the catalog.',
+                    text: __('telegram.commands.item_not_found'),
                     chat_id: $chatId
                 );
             }
         });
 
-
-        // Fallback handler for unrecognized messages
-        $bot->fallback(function (Nutgram $bot) {
-            // Send plain text without Markdown to avoid parsing errors
-            $bot->sendMessage(
-                text: "Base error handler. I didn't recognize that command.\n\nUse /start to browse the catalog.",
-                chat_id: $bot->chatId()
-            );
-        });
-
         // Exception handler
         $bot->onException(function (Nutgram $bot, \Throwable $exception) {
-            Log::error('Telegram bot error: ' . $exception->getMessage(), [
+            Log::error('Telegram bot error: '.$exception->getMessage(), [
                 'exception' => $exception,
                 'update' => $bot->update(),
             ]);
 
             try {
                 $bot->sendMessage(
-                    text: 'Sorry, something went wrong. Please try again or use /start to open the catalog.',
+                    text: __('telegram.error'),
                     chat_id: $bot->chatId()
                 );
             } catch (\Exception $e) {
-                Log::error('Failed to send error message: ' . $e->getMessage());
+                Log::error('Failed to send error message: '.$e->getMessage());
             }
         });
     }
