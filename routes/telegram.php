@@ -29,7 +29,7 @@ $bot->onCommand('settings', function (Nutgram $bot) {
 
 $bot->fallback(function (Nutgram $bot) {
     $bot->sendMessage(
-        text: "Base error handler. I didn't recognize that command.\n\nUse /start to browse the catalog.",
+        text: __('telegram.help'),
         chat_id: $bot->chatId()
     );
 });

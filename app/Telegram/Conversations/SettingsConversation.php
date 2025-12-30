@@ -107,10 +107,10 @@ class SettingsConversation extends InlineMenu
             \Log::info('Language updated', ['user_id' => $user->id, 'new_language' => $language->value]);
             App::setLocale($language->value);
 
-            $bot->answerCallbackQuery([
-                'text' => trans('telegram.language.changed', ['language' => $language->getName()]),
-                'show_alert' => false,
-            ]);
+            $bot->answerCallbackQuery(
+                text: trans('telegram.language.changed', ['language' => $language->getName()]),
+                show_alert: false
+            );
         } else {
             \Log::info('Language not changed - same as current');
         }
@@ -167,10 +167,10 @@ class SettingsConversation extends InlineMenu
         if ($user->gender !== $gender) {
             $this->settingsService->updateGender($user, $gender);
 
-            $bot->answerCallbackQuery([
-                'text' => trans('telegram.gender.changed'),
-                'show_alert' => false,
-            ]);
+            $bot->answerCallbackQuery(
+                text: trans('telegram.gender.changed'),
+                show_alert: false
+            );
         }
 
         $this->start($bot);
