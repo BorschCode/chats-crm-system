@@ -92,8 +92,11 @@ class SettingsConversation extends InlineMenu
     {
         $user = $this->getUserFromBot($bot);
 
-        // Extract language code from callback data: settings:lang:uk
-        [, , $languageCode] = explode(':', $bot->callbackQuery()->data);
+        // Extract language code from callback data: settings:lang:uk@handleLanguageSelection
+        $callbackData = $bot->callbackQuery()->data;
+        // Remove @methodName part if present
+        $callbackData = explode('@', $callbackData)[0];
+        [, , $languageCode] = explode(':', $callbackData);
         \Log::info('Language selection', ['code' => $languageCode]);
 
         $language = Language::from($languageCode);
@@ -104,10 +107,10 @@ class SettingsConversation extends InlineMenu
             \Log::info('Language updated', ['user_id' => $user->id, 'new_language' => $language->value]);
             App::setLocale($language->value);
 
-            $bot->answerCallbackQuery(
-                text: trans('telegram.language.changed', ['language' => $language->getName()]),
-                show_alert: false
-            );
+            $bot->answerCallbackQuery([
+                'text' => trans('telegram.language.changed', ['language' => $language->getName()]),
+                'show_alert' => false,
+            ]);
         } else {
             \Log::info('Language not changed - same as current');
         }
@@ -153,18 +156,21 @@ class SettingsConversation extends InlineMenu
         $user = $this->getUserFromBot($bot);
         App::setLocale($user->language->value);
 
-        // Extract gender value from callback data: settings:gnd:male
-        [, , $genderValue] = explode(':', $bot->callbackQuery()->data);
+        // Extract gender value from callback data: settings:gnd:male@handleGenderSelection
+        $callbackData = $bot->callbackQuery()->data;
+        // Remove @methodName part if present
+        $callbackData = explode('@', $callbackData)[0];
+        [, , $genderValue] = explode(':', $callbackData);
 
         $gender = Gender::from($genderValue);
 
         if ($user->gender !== $gender) {
             $this->settingsService->updateGender($user, $gender);
 
-            $bot->answerCallbackQuery(
-                text: trans('telegram.gender.changed'),
-                show_alert: false
-            );
+            $bot->answerCallbackQuery([
+                'text' => trans('telegram.gender.changed'),
+                'show_alert' => false,
+            ]);
         }
 
         $this->start($bot);
