@@ -8,7 +8,10 @@ return [
     'safe_mode' => env('TELEGRAM_SAFE_MODE', false),
 
     // Extra or specific configurations
-    'config' => [],
+    'config' => [
+        // Conversation TTL in seconds (required for webhook mode conversation persistence)
+        'conversation_ttl' => env('NUTGRAM_CONVERSATION_TTL', 7200), // 2 hours
+    ],
 
     // Set if the service provider should automatically load
     // handlers from /routes/telegram.php
