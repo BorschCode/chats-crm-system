@@ -13,16 +13,8 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(Nutgram::class, function ($app) {
-            $config = config('services.telegram');
-            $token = $config['bot_token'] ?? 'dummy-token';
-
-            if ($token === 'your_bot_token_from_@BotFather') {
-                $token = 'dummy-token';
-            }
-
-            return new Nutgram($token);
-        });
+        // Nutgram singleton is registered by NutgramServiceProvider with proper configuration
+        // DO NOT override it here to preserve cache and conversation persistence
 
         $this->app->singleton(BotHandlers::class, function ($app) {
             return new BotHandlers(
@@ -38,10 +30,7 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
-        if (config('services.telegram.bot_token')) {
-            $bot = $this->app->make(Nutgram::class);
-            $handlers = $this->app->make(BotHandlers::class);
-            $handlers->registerHandlers($bot);
-        }
+        // Handler registration is done in routes/telegram.php via NutgramServiceProvider
+        // DO NOT register handlers here to avoid double registration
     }
 }
