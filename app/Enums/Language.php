@@ -19,7 +19,7 @@ enum Language: string
         return match ($this) {
             self::English => '🇬🇧',
             self::Ukrainian => '🇺🇦',
-            self::Russian => '🇷🇺',
+            self::Russian => '💩',
             self::German => '🇩🇪',
             self::Romanian => '🇷🇴',
             self::Georgian => '🇬🇪',
@@ -34,7 +34,7 @@ enum Language: string
         return match ($this) {
             self::English => 'English',
             self::Ukrainian => 'Українська',
-            self::Russian => 'Русский',
+            self::Russian => 'руцкий',
             self::German => 'Deutsch',
             self::Romanian => 'Română',
             self::Georgian => 'ქართული',
