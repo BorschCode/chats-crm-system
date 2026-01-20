@@ -256,7 +256,7 @@ npm run build
 When testing webhooks locally with ngrok:
 
 ```bash
-ngrok http 80
+ngrok http 8053
 ```
 
 Then use the ngrok HTTPS URL for webhook registration:
