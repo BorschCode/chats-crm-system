@@ -8,6 +8,9 @@ on:
         required: false
         default: "0"
 
+permissions:
+  contents: read
+
 jobs:
   update:
     name: Update ngrok URL & set Telegram webhook
