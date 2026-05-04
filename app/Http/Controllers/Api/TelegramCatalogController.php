@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Group;
+use App\Models\Item;
 use App\Services\CatalogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +26,7 @@ class TelegramCatalogController extends Controller
         return response()->json([
             'success' => true,
             'user' => $request->input('telegramUser'),
-            'groups' => $groups->map(fn ($group) => [
+            'groups' => $groups->map(fn (Group $group) => [
                 'id' => $group->id,
                 'slug' => $group->slug,
                 'title' => $group->title,
@@ -43,7 +45,7 @@ class TelegramCatalogController extends Controller
         return response()->json([
             'success' => true,
             'group_slug' => $groupSlug,
-            'items' => $items->map(fn ($item) => [
+            'items' => $items->map(fn (Item $item) => [
                 'id' => $item->id,
                 'slug' => $item->slug,
                 'title' => $item->title,
