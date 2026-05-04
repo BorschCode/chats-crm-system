@@ -284,8 +284,8 @@
             document.getElementById('welcomeText').textContent = `Hello, ${user.first_name}! 👋`;
         }
 
-        // API Base URL
-        const API_BASE = '{{ config('app.url') }}/api/telegram';
+        // API Base URL — use relative path so it always resolves to the current host
+        const API_BASE = '/api/telegram';
 
         // Fetch with Telegram auth
         async function fetchAPI(endpoint) {
