@@ -10,6 +10,7 @@ services:
     networks:
       - app-network
     volumes:
+      - ./.env:/var/www/html/.env:ro
       - ./storage/app:/var/www/html/storage/app
       - app-logs:/var/www/html/storage/logs
     healthcheck:
