@@ -212,7 +212,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           GH_ENV_NAME: raspberry
           COMPOSE_FILE: compose.raspberry.yml
-          SKIP_GH_UPDATE: "1"
         run: bash scripts/update-ngrok-webhook.sh
 
       - name: Cleanup old images
