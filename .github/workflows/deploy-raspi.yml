@@ -207,6 +207,13 @@ jobs:
         run: |
           docker compose -f compose.raspberry.yml exec -T app php artisan queue:restart
 
+      - name: Set Telegram webhook
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_ENV_NAME: raspberry
+          COMPOSE_FILE: compose.raspberry.yml
+        run: bash scripts/update-ngrok-webhook.sh
+
       - name: Cleanup old images
         run: docker image prune -af --filter "until=168h" || true
 
