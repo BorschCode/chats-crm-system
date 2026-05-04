@@ -1,0 +1,27 @@
+name: Update ngrok URL & Telegram Webhook
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_gh_update:
+        description: "Skip updating GitHub APP_URL variable (set to 1 to skip)"
+        required: false
+        default: "0"
+
+jobs:
+  update:
+    name: Update ngrok URL & set Telegram webhook
+    runs-on: [self-hosted, Linux, ARM64]
+    environment: raspberry
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update APP_URL & set Telegram webhook
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_ENV_NAME: raspberry
+          SKIP_GH_UPDATE: ${{ github.event.inputs.skip_gh_update }}
+          COMPOSE_FILE: compose.raspberry.yml
+        run: bash scripts/update-ngrok-webhook.sh
