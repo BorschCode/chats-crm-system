@@ -200,8 +200,7 @@ jobs:
         run: |
           docker compose -f compose.raspberry.yml exec -T app php artisan config:cache
           docker compose -f compose.raspberry.yml exec -T app php artisan route:cache
-          docker compose -f compose.raspberry.yml exec -T app php artisan view:cache
-          docker compose -f compose.raspberry.yml exec -T app php artisan optimize
+          docker compose -f compose.raspberry.yml exec -T app php -d memory_limit=256M artisan view:cache
 
       - name: Restart queue workers
         run: |
