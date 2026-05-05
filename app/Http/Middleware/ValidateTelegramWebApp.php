@@ -14,6 +14,8 @@ class ValidateTelegramWebApp
      */
     public function handle(Request $request, Closure $next): Response
     {
+        Log::info('HEADERS', $request->headers->all());
+
         $initData = $request->header('X-Telegram-Init-Data') ?? $request->input('_auth');
 
         // Allow requests without auth in local development
