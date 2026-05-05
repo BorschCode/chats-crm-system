@@ -4,7 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Catalog - Telegram Mini App</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        window._tgFallback = {
+            ready: function() {},
+            expand: function() {},
+            setHeaderColor: function() {},
+            initData: '',
+            initDataUnsafe: { user: null },
+            version: '0',
+            BackButton: { show: function() {}, hide: function() {}, onClick: function() {} },
+            showAlert: function(msg) { alert(msg); },
+        };
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"
+            onerror="window.Telegram = { WebApp: window._tgFallback }"></script>
     <style>
         * {
             margin: 0;
@@ -264,8 +277,8 @@
         tg.ready();
         tg.expand();
 
-        // Set header color
-        tg.setHeaderColor('#ffffff');
+        // Set header color (only supported from WebApp API v6.1+)
+        try { tg.setHeaderColor('#ffffff'); } catch (e) {}
 
         // Get user data
         const user = tg.initDataUnsafe.user;
