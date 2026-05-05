@@ -271,7 +271,12 @@
         const user = tg.initDataUnsafe.user;
         const initData = tg.initData;
 
-        console.log('Telegram WebApp initialized', { user });
+        console.log('Telegram WebApp initialized', {
+            user,
+            initDataLength: initData.length,
+            initDataPresent: initData.length > 0,
+            version: tg.version,
+        });
 
         // State
         let currentView = 'groups';
