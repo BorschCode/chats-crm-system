@@ -110,6 +110,9 @@ jobs:
           APP_URL=${{ vars.APP_URL }}
           APP_PORT=${{ vars.APP_PORT }}
 
+          WWWUSER=1000
+          WWWGROUP=1000
+
           APP_LOCALE=en
           APP_FALLBACK_LOCALE=en
 
