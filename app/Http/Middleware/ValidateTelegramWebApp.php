@@ -14,28 +14,22 @@ class ValidateTelegramWebApp
      */
     public function handle(Request $request, Closure $next): Response
     {
-        Log::info('HEADERS', $request->headers->all());
-
-        // Use ?: so empty string "" (injected by nginx when header is absent) falls through to _auth
-        $initData = $request->header('X-Telegram-Init-Data') ?: $request->input('_auth');
-
         Log::info('INIT_DATA_DEBUG', [
             'raw_header' => $request->header('X-Telegram-Init-Data'),
-            'init_data_length' => strlen((string) $initData),
-            'has_init_data' => (bool) $initData,
+            'init_data_length' => strlen((string) $request->header('X-Telegram-Init-Data')),
+            'version' => $request->header('X-Telegram-Version'),
         ]);
 
-        // Allow requests without auth in local development
-        if (! $initData && app()->environment('local')) {
-            Log::warning('Telegram WebApp validation skipped (local development)');
+        // Use ?: so nginx's empty string injection falls through to _auth query param
+        $initData = $request->header('X-Telegram-Init-Data') ?: $request->input('_auth');
+
+        // No initData — allow as anonymous Telegram user (catalog is read-only public data).
+        // Old Telegram Desktop clients (WebApp API v6.0) pass initDataUnsafe but not the
+        // raw initData string, so blocking here would break the catalog for those users.
+        if (! $initData) {
+            Log::info('Telegram WebApp: no initData, continuing as anonymous');
 
             return $next($request);
-        }
-
-        if (! $initData) {
-            Log::warning('Missing Telegram init data');
-
-            return response()->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
         }
 
         if (! $this->validateTelegramData($initData)) {
