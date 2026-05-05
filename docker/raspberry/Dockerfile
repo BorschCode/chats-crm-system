@@ -54,10 +54,6 @@ RUN apt-get install -y --no-install-recommends \
     php8.4-bcmath \
     php8.4-soap \
     php8.4-intl \
-    php8.4-readline \
-    php8.4-ldap \
-    php8.4-msgpack \
-    php8.4-igbinary \
     && php -r "readfile('https://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer \
     && apt-get -y autoremove \
     && apt-get clean \
