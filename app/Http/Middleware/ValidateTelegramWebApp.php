@@ -16,7 +16,14 @@ class ValidateTelegramWebApp
     {
         Log::info('HEADERS', $request->headers->all());
 
-        $initData = $request->header('X-Telegram-Init-Data') ?? $request->input('_auth');
+        // Use ?: so empty string "" (injected by nginx when header is absent) falls through to _auth
+        $initData = $request->header('X-Telegram-Init-Data') ?: $request->input('_auth');
+
+        Log::info('INIT_DATA_DEBUG', [
+            'raw_header' => $request->header('X-Telegram-Init-Data'),
+            'init_data_length' => strlen((string) $initData),
+            'has_init_data' => (bool) $initData,
+        ]);
 
         // Allow requests without auth in local development
         if (! $initData && app()->environment('local')) {
