@@ -16,5 +16,5 @@ Route::get('/about', About::class)->name('about');
 
 // Telegram Mini App
 Route::get('/telegram/app', function () {
-    return view('telegram.app');
+    return view('telegram.test-simple');
 })->name('telegram.app');
