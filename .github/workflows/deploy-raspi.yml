@@ -64,7 +64,7 @@ jobs:
       - name: Free up memory before pull
         run: |
           echo "Freeing up memory..."
-          docker system prune -af --volumes || true
+          docker system prune -af || true
           sync
           echo "Memory status:"
           free -h
@@ -93,11 +93,17 @@ jobs:
           echo "Failed to pull image after 3 attempts"
           exit 1
 
+      - name: Save old image tag for rollback
+        id: old_image
+        run: |
+          OLD_IMAGE=$(docker inspect chats-crm-app --format '{{.Config.Image}}' 2>/dev/null || echo "")
+          echo "old_image=${OLD_IMAGE}" >> $GITHUB_OUTPUT
+          echo "Previous image: ${OLD_IMAGE:-none}"
+
       - name: Stop and remove old container
         run: |
           docker compose -f compose.raspberry.yml down --remove-orphans || true
           docker ps -aq --filter "name=chats-crm" | xargs -r docker rm -f || true
-          docker image prune -af || true
           echo "Cleanup completed"
 
       - name: Create .env file
@@ -156,10 +162,21 @@ jobs:
           EOF
 
       - name: Deploy with Docker Compose
+        id: deploy
         run: |
           echo "Using image: ${DOCKER_USERNAME}/chats-crm-system:${IMAGE_TAG}"
           docker compose -f compose.raspberry.yml up -d --no-deps
           echo "Container started"
+
+      - name: Rollback on deploy failure
+        if: failure() && steps.deploy.outcome == 'failure' && steps.old_image.outputs.old_image != ''
+        run: |
+          echo "Deploy failed, rolling back to ${{ steps.old_image.outputs.old_image }}"
+          docker pull "${{ steps.old_image.outputs.old_image }}" || true
+          IMAGE_TAG_ROLLBACK="${{ steps.old_image.outputs.old_image }}" \
+            DOCKER_USERNAME="${DOCKER_USERNAME}" \
+            docker compose -f compose.raspberry.yml up -d --no-deps || true
+          echo "Rollback attempted"
 
       - name: Wait for container readiness
         run: |
